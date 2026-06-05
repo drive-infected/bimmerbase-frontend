@@ -1,18 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Meilisearch } from 'meilisearch';
 
-const client = new Meilisearch({
-  host: 'http://localhost:7700',
-  apiKey: 'bmw_master_key_2024',
-});
-
-const INDEXES = {
-  article: { name: 'article', ru: 'Статьи', en: 'Articles' },
-  series: { name: 'serie', ru: 'Модели', en: 'Models' },
-  engine: { name: 'engine', ru: 'Двигатели', en: 'Engines' },
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function SearchResults({ lang }) {
   const [query, setQuery] = useState('');
@@ -37,11 +27,28 @@ export default function SearchResults({ lang }) {
     setLoading(true);
     try {
       const allResults = {};
-      for (const [key, idx] of Object.entries(INDEXES)) {
-        const searchIndex = client.index(idx.name);
-        const res = await searchIndex.search(searchQuery, { limit: 10 });
-        allResults[key] = res.hits.map((hit) => ({ ...hit, _type: key }));
-      }
+
+      // Поиск по статьям
+      const articleRes = await fetch(
+        `${API_URL}/api/articles?locale=${lang}&filters[$or][0][title][$containsi]=${encodeURIComponent(searchQuery)}&filters[$or][1][intro][$containsi]=${encodeURIComponent(searchQuery)}&populate=*&pagination[limit]=5`
+      );
+      const articleData = await articleRes.json();
+      allResults.article = (articleData.data || []).map((h) => ({ ...h, _type: 'article' }));
+
+      // Поиск по поколениям
+      const genRes = await fetch(
+        `${API_URL}/api/generations?locale=${lang}&filters[title][$containsi]=${encodeURIComponent(searchQuery)}&populate=*&pagination[limit]=5`
+      );
+      const genData = await genRes.json();
+      allResults.series = (genData.data || []).map((h) => ({ ...h, _type: 'series' }));
+
+      // Поиск по двигателям
+      const engRes = await fetch(
+        `${API_URL}/api/engines?locale=${lang}&filters[index][$containsi]=${encodeURIComponent(searchQuery)}&populate=*&pagination[limit]=5`
+      );
+      const engData = await engRes.json();
+      allResults.engine = (engData.data || []).map((h) => ({ ...h, _type: 'engine' }));
+
       setResults(allResults);
     } catch (error) {
       console.error('Search error:', error);
@@ -60,20 +67,20 @@ export default function SearchResults({ lang }) {
   };
 
   const getUrl = (hit) => {
-    if (hit._type === 'series') return `/${lang}/models/${hit.slug}`;
+    if (hit._type === 'series') return `/${lang}/models/${hit.series?.slug || 'bmw'}/${hit.slug}`;
     if (hit._type === 'engine') return `/${lang}/engines/${hit.slug}`;
     if (hit._type === 'article') return `/${lang}/articles/${hit.slug}`;
     return '#';
   };
 
-  const getTitle = (hit) => {
-    if (lang === 'ru' && hit.localizations?.[0]?.title) return hit.localizations[0].title;
-    return hit.title || hit.index || '—';
-  };
+  const getTitle = (hit) => hit.title || hit.index || '—';
 
-  const getIntro = (hit) => {
-    if (lang === 'ru' && hit.localizations?.[0]?.intro) return hit.localizations[0].intro;
-    return hit.intro || '';
+  const getIntro = (hit) => hit.intro || '';
+
+  const INDEXES = {
+    article: { ru: 'Статьи', en: 'Articles' },
+    series: { ru: 'Модели', en: 'Models' },
+    engine: { ru: 'Двигатели', en: 'Engines' },
   };
 
   const getTypeLabel = (type) => {
@@ -99,24 +106,14 @@ export default function SearchResults({ lang }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-8">
-        {lang === 'ru' ? 'Поиск' : 'Search'}
-      </h1>
-
+      <h1 className="text-3xl font-bold mb-8">{lang === 'ru' ? 'Поиск' : 'Search'}</h1>
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="flex gap-3">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
             placeholder={lang === 'ru' ? 'Поиск по сайту...' : 'Search the site...'}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base outline-none focus:border-blue-700"
-          />
-          <button type="submit" className="btn-primary">
-            {lang === 'ru' ? 'Найти' : 'Search'}
-          </button>
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base outline-none focus:border-blue-700" />
+          <button type="submit" className="btn-primary">{lang === 'ru' ? 'Найти' : 'Search'}</button>
         </div>
-
         {results && (
           <div className="flex flex-wrap gap-2 mt-4">
             <button type="button" onClick={() => setActiveFilter(null)}
@@ -133,24 +130,17 @@ export default function SearchResults({ lang }) {
           </div>
         )}
       </form>
-
       {loading && <p className="text-gray-500">{lang === 'ru' ? 'Поиск...' : 'Searching...'}</p>}
-
-      {results && totalHits === 0 && (
-        <p className="text-gray-500 mt-6">{lang === 'ru' ? 'Ничего не найдено' : 'Nothing found'}</p>
-      )}
-
+      {results && totalHits === 0 && <p className="text-gray-500 mt-6">{lang === 'ru' ? 'Ничего не найдено' : 'Nothing found'}</p>}
       {results && totalHits > 0 && (
         <div className="flex flex-col gap-4 mt-6">
           {filteredResults.map((hit, i) => (
-            <a key={hit._meilisearch_id || i} href={getUrl(hit)} className="card-link">
+            <a key={hit.documentId || i} href={getUrl(hit)} className="card-link">
               <div className="flex justify-between items-start">
                 <strong className="text-lg">{getTitle(hit)}</strong>
                 <span className="type-badge">{getTypeLabel(hit._type)}</span>
               </div>
-              {getIntro(hit) && (
-                <p className="text-sm text-gray-600 mt-2">{getIntro(hit).substring(0, 200)}</p>
-              )}
+              {getIntro(hit) && <p className="text-sm text-gray-600 mt-2">{getIntro(hit).substring(0, 200)}</p>}
             </a>
           ))}
         </div>
