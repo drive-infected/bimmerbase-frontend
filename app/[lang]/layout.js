@@ -51,8 +51,8 @@ export default async function RootLayout({ children, params }) {
 
           <div className="flex items-center gap-3 ml-auto">
   <a href={`/${lang}/search`} className="text-gray-300 hover:text-white text-sm no-underline">
-    Поиск 🔍
-  </a>
+  {t.search} 🔍
+</a>
   <a href={`/${lang}/garage`} className="text-gray-300 hover:text-white text-sm no-underline">
     {lang === 'ru' ? 'Гараж' : 'Garage'}
   </a>
