@@ -87,19 +87,19 @@ export default async function GenerationPage({ params }) {
         {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
       </p>
 
-      {/* LCI (рестайлинг) */}
-      {gen.lci_info && (
-        <div className="mt-8 rich-text">
-          <h2 className="section-title">LCI</h2>
-          <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
-        </div>
-      )}
-
       {/* Описание */}
       {gen.description && (
         <div className="mt-8 rich-text">
           <h2 className="section-title">{lang === 'ru' ? 'Обзор' : 'Overview'}</h2>
           <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.description) }} />
+        </div>
+      )}
+      
+      {/* LCI (рестайлинг) */}
+      {gen.lci_info && (
+        <div className="mt-8 rich-text">
+          <h2 className="section-title">LCI</h2>
+          <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
         </div>
       )}
 
