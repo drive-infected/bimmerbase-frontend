@@ -59,6 +59,21 @@ export default async function GenerationPage({ params }) {
   const data = await res.json();
   const gen = data.data?.[0];
 
+  // Загружаем модификации отдельно (без локали)
+let modifications = [];
+if (gen) {
+  try {
+    const modRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[generation][documentId][$eq]=${gen.documentId}&populate=*`,
+      { cache: 'no-store' }
+    );
+    const modData = await modRes.json();
+    modifications = modData.data || [];
+  } catch (e) {
+    // silently fail
+  }
+}
+
   if (!gen) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -122,11 +137,11 @@ export default async function GenerationPage({ params }) {
       )}
 
             {/* Модификации */}
-      {gen.modifications && gen.modifications.length > 0 && (
+      {modifications.length > 0 && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {gen.modifications.map((mod) => (
+            {modifications.map((mod) => (
               <div key={mod.id} className="card">
                 <div className="flex justify-between items-start gap-2">
                   <strong className="text-lg">{mod.title}</strong>
