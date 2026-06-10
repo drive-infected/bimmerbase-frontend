@@ -208,7 +208,13 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
         : mc.drivetrain)
     : '—'}
 </td>
-                      <td className="p-3">{mc.steering?.title || '—'}</td>
+                      <td className="p-3">
+  {mc.steering?.title
+    ? (lang === 'ru'
+        ? { 'Left-hand drive': 'Левый руль', 'Right-hand drive': 'Правый руль' }[mc.steering.title] || mc.steering.title
+        : mc.steering.title)
+    : '—'}
+</td>
                       <td className="p-3">
   {mc.market?.title
     ? (lang === 'ru'
