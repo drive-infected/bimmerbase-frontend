@@ -103,32 +103,42 @@ export default async function GenerationPage({ params }) {
         </div>
       )}
 
-      {/* Двигатели */}
+            {/* Двигатели */}
       {gen.engines && gen.engines.length > 0 && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Двигатели' : 'Engines'}</h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {gen.engines.map((engine) => (
-              <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link !p-4">
-                <strong>{engine.index}</strong>
-                <p className="text-sm text-gray-500 mt-1">{engine.power_hp} hp • {engine.displacement} cc</p>
+              <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
+                <strong className="text-lg block">{engine.index}</strong>
+                <div className="text-sm text-gray-600 mt-2 space-y-1">
+                  <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
+                  <div>{engine.displacement} cc</div>
+                </div>
               </a>
             ))}
           </div>
         </div>
       )}
 
-      {/* Модификации */}
+            {/* Модификации */}
       {gen.modifications && gen.modifications.length > 0 && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {gen.modifications.map((mod) => (
               <div key={mod.id} className="card">
-                <strong className="text-xl">{mod.title}</strong>
-                <div className="text-sm text-gray-600 mt-3 space-y-1">
-                  <div>{mod.power_hp} hp • {mod.torque_nm} Nm</div>
+                <div className="flex justify-between items-start gap-2">
+                  <strong className="text-lg">{mod.title}</strong>
+                  {mod.lci && (
+                    <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${mod.lci === 'lci' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {mod.lci === 'lci' ? 'LCI' : 'Pre-LCI'}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600 mt-2 space-y-1">
                   <div>{translateFuelType(mod.fuel_type, lang)} • {mod.displacement} cc</div>
+                  {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
                   {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
                 </div>
               </div>
