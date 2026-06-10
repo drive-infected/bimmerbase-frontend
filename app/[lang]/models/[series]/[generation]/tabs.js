@@ -221,7 +221,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                       <td className="p-3">
   {mc.steering?.code
     ? (lang === 'ru'
-        ? { 'LHD': 'Левый руль', 'RHD': 'Правый руль' }[mc.steering.code] || mc.steering.code
+        ? { 'LHD': 'Левый', 'RHD': 'Правый' }[mc.steering.code] || mc.steering.code
         : mc.steering.code)
     : '—'}
 </td>
