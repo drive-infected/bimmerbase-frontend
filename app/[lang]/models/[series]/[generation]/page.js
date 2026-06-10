@@ -131,10 +131,10 @@ export default async function GenerationPage({ params }) {
                 <div className="flex justify-between items-start gap-2">
                   <strong className="text-lg">{mod.title}</strong>
                   {mod.lci && (
-                    <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${mod.lci === 'lci' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {mod.lci === 'lci' ? 'LCI' : 'Pre-LCI'}
-                    </span>
-                  )}
+  <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${mod.lci === 'LCI' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+    {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
+  </span>
+)}
                 </div>
                 <div className="text-sm text-gray-600 mt-2 space-y-1">
                   <div>{translateFuelType(mod.fuel_type, lang)} • {mod.displacement} cc</div>
