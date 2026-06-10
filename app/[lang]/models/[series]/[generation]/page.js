@@ -68,7 +68,12 @@ if (gen) {
       { cache: 'no-store' }
     );
     const modData = await modRes.json();
-    modifications = modData.data || [];
+modifications = (modData.data || []).sort((a, b) => {
+  // pre-lci идут первыми
+  if (a.lci !== b.lci) return a.lci === 'LCI' ? 1 : -1;
+  // затем по названию
+  return (a.title || '').localeCompare(b.title || '');
+});
   } catch (e) {
     // silently fail
   }
@@ -152,7 +157,10 @@ if (gen) {
 )}
                 </div>
                 <div className="text-sm text-gray-600 mt-2 space-y-1">
-                  <div>{translateFuelType(mod.fuel_type, lang)} • {mod.displacement} cc</div>
+                  <div>{translateFuelType(mod.fuel_type, lang)}</div>
+{mod.production_start && (
+  <div>{mod.production_start.substring(0, 4)}–{mod.production_end?.substring(0, 4) || '...'}</div>
+)}
                   {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
                   {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
                 </div>
