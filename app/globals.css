@@ -20,7 +20,7 @@ body {
 .card {
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   background-color: white;
   transition: box-shadow 0.2s;
 }
@@ -32,7 +32,7 @@ body {
 .card-link {
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   background-color: white;
   transition: box-shadow 0.2s;
   text-decoration: none;
@@ -42,6 +42,37 @@ body {
 
 .card-link:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.card-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-badge-green {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.card-badge-gray {
+  background-color: #f3f4f6;
+  color: #4b5563;
 }
 
 .section-title {
