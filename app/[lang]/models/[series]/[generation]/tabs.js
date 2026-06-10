@@ -165,7 +165,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
         </>
       )}
 
-      {/* Вкладка: Коды моделей */}
+            {/* Вкладка: Коды моделей */}
       {activeTab === 'codes' && (
         <>
           {modelCodes.length > 0 ? (
@@ -173,25 +173,31 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-3 font-medium text-gray-600">Code</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Модификация' : 'Modification'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Код' : 'Code'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Начало выпуска' : 'Start'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Конец выпуска' : 'End'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Модель' : 'Model'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Кузов' : 'Body'}</th>
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Двигатель' : 'Engine'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'КПП' : 'Transmission'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Мощность' : 'Power'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Привод' : 'Drivetrain'}</th>
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Руль' : 'Steering'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Рынок' : 'Market'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">VIN</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Регион' : 'Region'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {modelCodes.map((mc) => (
                     <tr key={mc.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-mono font-semibold">{mc.code}</td>
+                      <td className="p-3 font-mono font-semibold">{mc.code || '—'}</td>
+                      <td className="p-3">{mc.production_start?.substring(0, 4) || '—'}</td>
+                      <td className="p-3">{mc.production_end?.substring(0, 4) || '—'}</td>
                       <td className="p-3">{mc.modification?.title || '—'}</td>
+                      <td className="p-3">{mc.body?.title || '—'}</td>
                       <td className="p-3">{mc.engine?.index || '—'}</td>
-                      <td className="p-3">{mc.transmission?.title || '—'}</td>
+                      <td className="p-3">{mc.engine?.power_hp ? `${mc.engine.power_hp} hp` : '—'}</td>
+                      <td className="p-3">RWD</td>
                       <td className="p-3">{mc.steering?.title || '—'}</td>
                       <td className="p-3">{mc.market?.title || '—'}</td>
-                      <td className="p-3 font-mono text-xs">{mc.vin_start || '—'} – {mc.vin_end || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
