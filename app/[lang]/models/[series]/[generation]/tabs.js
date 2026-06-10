@@ -1,5 +1,13 @@
 'use client';
 
+function formatDate(dateString) {
+  if (!dateString) return '...';
+  const d = new Date(dateString);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${month}.${year}`;
+}
+
 import { useState } from 'react';
 
 function renderRichText(blocks) {
@@ -174,8 +182,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Код' : 'Code'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Начало выпуска' : 'Start'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Конец выпуска' : 'End'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Период выпуска' : 'Production period'}</th>
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Модель' : 'Model'}</th>
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Кузов' : 'Body'}</th>
                     <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Двигатель' : 'Engine'}</th>
@@ -189,8 +196,11 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                   {modelCodes.map((mc) => (
                     <tr key={mc.id} className="border-b hover:bg-gray-50">
                       <td className="p-3 font-mono font-semibold">{mc.code || '—'}</td>
-                      <td className="p-3">{mc.production_start?.substring(0, 4) || '—'}</td>
-                      <td className="p-3">{mc.production_end?.substring(0, 4) || '—'}</td>
+                      <td className="p-3">
+  {mc.production_start
+    ? `${formatDate(mc.production_start)} – ${formatDate(mc.production_end)}`
+    : '—'}
+</td>
                       <td className="p-3">{mc.modification?.title || '—'}</td>
                       <td className="p-3">
   {mc.body?.title
@@ -209,10 +219,10 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
     : '—'}
 </td>
                       <td className="p-3">
-  {mc.steering?.title
+  {mc.steering?.code
     ? (lang === 'ru'
-        ? { 'Left-hand drive': 'Левый руль', 'Right-hand drive': 'Правый руль' }[mc.steering.title] || mc.steering.title
-        : mc.steering.title)
+        ? { 'LHD': 'Левый руль', 'RHD': 'Правый руль' }[mc.steering.code] || mc.steering.code
+        : mc.steering.code)
     : '—'}
 </td>
                       <td className="p-3">
