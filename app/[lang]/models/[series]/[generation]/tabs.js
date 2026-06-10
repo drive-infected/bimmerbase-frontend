@@ -192,7 +192,13 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                       <td className="p-3">{mc.production_start?.substring(0, 4) || '—'}</td>
                       <td className="p-3">{mc.production_end?.substring(0, 4) || '—'}</td>
                       <td className="p-3">{mc.modification?.title || '—'}</td>
-                      <td className="p-3">{mc.body?.title || '—'}</td>
+                      <td className="p-3">
+  {mc.body?.title
+    ? (lang === 'ru'
+        ? { Sedan: 'Седан', Touring: 'Универсал', Coupe: 'Купе', Cabriolet: 'Кабриолет', Compact: 'Компакт', Hatchback: 'Хэтчбек', 'Long wheelbase': 'Лонг' }[mc.body.title] || mc.body.title
+        : mc.body.title)
+    : '—'}
+</td>
                       <td className="p-3">{mc.engine?.index || '—'}</td>
                       <td className="p-3">{mc.engine?.power_hp ? `${mc.engine.power_hp} hp` : '—'}</td>
                       <td className="p-3">
@@ -203,7 +209,26 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
     : '—'}
 </td>
                       <td className="p-3">{mc.steering?.title || '—'}</td>
-                      <td className="p-3">{mc.market?.title || '—'}</td>
+                      <td className="p-3">
+  {mc.market?.title
+    ? (lang === 'ru'
+        ? {
+            Russia: 'Россия',
+            Germany: 'Германия',
+            Europe: 'Европа',
+            USA: 'США',
+            Japan: 'Япония',
+            Egypt: 'Египет',
+            Malaysia: 'Малайзия',
+            Indonesia: 'Индонезия',
+            Thailand: 'Таиланд',
+            Philippines: 'Филиппины',
+            Vietnam: 'Вьетнам',
+            Mexico: 'Мексика',
+          }[mc.market.title] || mc.market.title
+        : mc.market.title)
+    : '—'}
+</td>
                     </tr>
                   ))}
                 </tbody>
