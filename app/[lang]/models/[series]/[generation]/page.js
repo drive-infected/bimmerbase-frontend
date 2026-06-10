@@ -158,8 +158,8 @@ modifications = (modData.data || []).sort((a, b) => {
                 </div>
                 <div className="text-sm text-gray-600 mt-2 space-y-1">
                   <div>{translateFuelType(mod.fuel_type, lang)}</div>
-{mod.production_start && (
-  <div>{mod.production_start.substring(0, 4)}–{mod.production_end?.substring(0, 4) || '...'}</div>
+{mod.engines && mod.engines.length > 0 && (
+  <div>{mod.engines[0].index} • {mod.engines[0].displacement} cc</div>
 )}
                   {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
                   {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
