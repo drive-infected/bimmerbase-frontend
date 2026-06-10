@@ -1,4 +1,4 @@
-import Tabs from './Tabs';
+import Tabs from './tabs';
 
 export default async function GenerationPage({ params }) {
   const { series, generation, lang } = await params;
