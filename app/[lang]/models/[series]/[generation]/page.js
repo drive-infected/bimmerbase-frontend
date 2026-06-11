@@ -45,7 +45,7 @@ if (gen) {
       if (pageData.length < 100) break;
       page++;
     }
-    modelCodes = allCodes.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+    modelCodes = allCodes.sort((a, b) => (a.id || 0) - (b.id || 0));
   } catch (e) {
     // silently fail
   }
