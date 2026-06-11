@@ -33,7 +33,7 @@ export default async function GenerationPage({ params }) {
   if (gen) {
     try {
       const codesRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*&pagination[pageSize]=200`,
         { cache: 'no-store' }
       );
       const codesData = await codesRes.json();
