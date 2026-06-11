@@ -30,18 +30,26 @@ export default async function GenerationPage({ params }) {
 
   // Загружаем коды моделей
   let modelCodes = [];
-  if (gen) {
-    try {
+if (gen) {
+  try {
+    let page = 1;
+    let allCodes = [];
+    while (true) {
       const codesRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*&pagination[pageSize]=200`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*&pagination[pageSize]=100&pagination[page]=${page}`,
         { cache: 'no-store' }
       );
       const codesData = await codesRes.json();
-      modelCodes = (codesData.data || []).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
-    } catch (e) {
-      // silently fail
+      const pageData = codesData.data || [];
+      allCodes = allCodes.concat(pageData);
+      if (pageData.length < 100) break;
+      page++;
     }
+    modelCodes = allCodes.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+  } catch (e) {
+    // silently fail
   }
+}
 
   if (!gen) {
     return (
