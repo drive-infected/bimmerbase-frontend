@@ -81,9 +81,9 @@ export default async function EnginePage({ params }) {
         <div className="mt-10"><h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
           <div className="flex flex-wrap gap-3">
             {engine.generations.map((g) => (
-              <a key={g.id} href={`/${lang}/models/${g.series?.slug || 'bmw'}/${g.slug}`} className="card-link !p-3 text-blue-700">
-                {g.title}
-              </a>
+              <a key={g.id} href={`/${lang}/models/${g.series?.slug || 'bmw'}/${g.slug}`} className="card-link !p-3">
+  <span className="card-title !mb-0">{g.title}</span>
+</a>
             ))}
           </div>
         </div>
@@ -94,10 +94,10 @@ export default async function EnginePage({ params }) {
         <div className="mt-10"><h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
           <div className="flex flex-col gap-3">
             {engine.articles.map((article) => (
-              <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link !p-4">
-                <strong>{article.title}</strong>
-                {article.intro && <p className="text-sm text-gray-600 mt-1">{article.intro}</p>}
-              </a>
+              <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+  <span className="card-title">{article.title}</span>
+  {article.intro && <p className="card-text">{article.intro}</p>}
+</a>
             ))}
           </div>
         </div>
@@ -107,5 +107,11 @@ export default async function EnginePage({ params }) {
 }
 
 function SpecItem({ label, value }) {
-  return <div className="bg-gray-50 rounded-lg p-3"><span className="text-xs text-gray-500">{label}</span><br /><span className="font-semibold text-sm">{value}</span></div>;
+  return (
+    <div className="card !p-3">
+      <span className="text-xs text-gray-500">{label}</span>
+      <br />
+      <span className="text-sm font-semibold">{value}</span>
+    </div>
+  );
 }
