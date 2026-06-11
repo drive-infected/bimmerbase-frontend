@@ -67,7 +67,7 @@ export default async function EnginePage({ params }) {
       {/* Обслуживание */}
       {(engine.oil_type || engine.oil_capacity || engine.coolant_type || engine.coolant_capacity) && (
         <div className="mt-10"><h2 className="section-title">{lang === 'ru' ? 'Обслуживание' : 'Maintenance'}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {engine.oil_type && <SpecItem label={lang === 'ru' ? 'Масло' : 'Oil'} value={engine.oil_type} />}
             {engine.oil_capacity && <SpecItem label={lang === 'ru' ? 'Объём масла' : 'Oil capacity'} value={`${engine.oil_capacity} L`} />}
             {engine.coolant_type && <SpecItem label={lang === 'ru' ? 'Тип ОЖ' : 'Coolant type'} value={engine.coolant_type} />}
