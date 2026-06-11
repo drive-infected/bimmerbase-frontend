@@ -13,6 +13,10 @@ export default async function EnginesListPage({ params }) {
   );
   const enginesData = await enginesRes.json();
 
+  // Группируем двигатели по типу топлива
+  const petrolEngines = (enginesData.data || []).filter(e => e.fuel_type === 'Petrol');
+  const dieselEngines = (enginesData.data || []).filter(e => e.fuel_type === 'Diesel');
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-8">
@@ -25,35 +29,54 @@ export default async function EnginesListPage({ params }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-12">
         {familiesData.data && familiesData.data.map((family) => (
           <div key={family.id} className="card">
-            <strong className="text-xl">{family.code}</strong>
-            <p className="text-sm text-gray-600 mt-2">
-              {family.cylinders} cyl • {family.fuel_type === 'Petrol' ? (lang === 'ru' ? 'Бензин' : 'Petrol') : 'Diesel'}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
-            </p>
+            <strong className="text-lg">{family.code}</strong>
+            <div className="text-sm text-gray-600 mt-2 space-y-1">
+              <div>{family.cylinders} cyl • {family.fuel_type === 'Petrol' ? (lang === 'ru' ? 'Бензин' : 'Petrol') : 'Diesel'}</div>
+              <div>{family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}</div>
+            </div>
           </div>
         ))}
       </div>
 
-      <h2 className="section-title">
-        {lang === 'ru' ? 'Все двигатели' : 'All Engines'}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {enginesData.data && enginesData.data.map((engine) => (
-          <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link !p-4">
-            <strong className="text-lg block">{engine.index}</strong>
-            <p className="text-sm text-gray-600 mt-1">
-              {engine.power_hp} hp • {engine.displacement} cc
-            </p>
-            {engine.engine_family && (
-              <p className="text-xs text-gray-400 mt-1">
-                {lang === 'ru' ? 'Семейство' : 'Family'}: {engine.engine_family.code}
-              </p>
-            )}
-          </a>
-        ))}
-      </div>
+      {/* Бензиновые двигатели */}
+      {petrolEngines.length > 0 && (
+        <div className="mb-10">
+          <h2 className="section-title">
+            {lang === 'ru' ? 'Бензиновые двигатели' : 'Petrol Engines'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {petrolEngines.map((engine) => (
+              <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
+                <strong className="text-lg block">{engine.index}</strong>
+                <div className="text-sm text-gray-600 mt-2 space-y-1">
+                  <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
+                  <div>{engine.displacement} cc</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Дизельные двигатели */}
+      {dieselEngines.length > 0 && (
+        <div className="mb-10">
+          <h2 className="section-title">
+            {lang === 'ru' ? 'Дизельные двигатели' : 'Diesel Engines'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {dieselEngines.map((engine) => (
+              <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
+                <strong className="text-lg block">{engine.index}</strong>
+                <div className="text-sm text-gray-600 mt-2 space-y-1">
+                  <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
+                  <div>{engine.displacement} cc</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
