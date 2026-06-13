@@ -19,53 +19,45 @@ export default function Tabs({ lang, petrolFamilies, dieselFamilies }) {
         </button>
       </div>
 
-      {families.map((family) => {
-        const engines = (family.engines || []).sort((a, b) => {
-          if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
-          return (a.index || '').localeCompare(b.index || '');
-        });
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {families.map((family) => {
+          const engines = (family.engines || []).sort((a, b) => {
+            if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
+            return (a.index || '').localeCompare(b.index || '');
+          });
 
-        return (
-          <div key={family.id} className="mb-10">
-            {/* Заголовок семейства */}
-            <div className="card mb-4">
-              <div className="flex flex-wrap justify-between items-start gap-4">
-                <div>
-                  <h2 className="text-xl font-bold">{family.code}</h2>
-                  <div className="text-sm text-gray-500 mt-1 space-x-3">
-                    <span>{family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}</span>
-                    <span>•</span>
-                    <span>{family.cylinders} cyl</span>
-                    <span>•</span>
-                    <span>{family.layout === 'Longitudinal' ? (lang === 'ru' ? 'Продольное' : 'Longitudinal') : (lang === 'ru' ? 'Поперечное' : 'Transverse')}</span>
-                    <span>•</span>
-                    <span>{family.head_material} / {family.block_material}</span>
-                  </div>
-                  {family.description && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                      {typeof family.description === 'string' ? family.description : family.description?.[0]?.children?.[0]?.text || ''}
-                    </p>
-                  )}
+          return (
+            <div key={family.id} className="flex flex-col">
+              {/* Карточка семейства */}
+              <div className="card mb-3">
+                <h2 className="text-lg font-bold">{family.code}</h2>
+                <div className="text-xs text-gray-500 mt-1 space-x-2">
+                  <span>{family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}</span>
+                  <span>•</span>
+                  <span>{family.cylinders} cyl</span>
+                  <span>•</span>
+                  <span>{family.layout === 'Longitudinal' ? (lang === 'ru' ? 'Продольное' : 'Longitudinal') : (lang === 'ru' ? 'Поперечное' : 'Transverse')}</span>
+                  <span>•</span>
+                  <span>{family.head_material} / {family.block_material}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Двигатели семейства */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {engines.map((engine) => (
-                <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
-                  <span className="card-title">{engine.index}</span>
-                  <div className="card-text mt-2 space-y-1">
-                    <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
-                    <div>{engine.displacement} cc</div>
-                    {engine.vvt && <div>{engine.vvt}</div>}
-                  </div>
-                </a>
-              ))}
+              {/* Двигатели */}
+              <div className="flex flex-col gap-2">
+                {engines.map((engine) => (
+                  <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link !p-3">
+                    <span className="text-sm font-semibold">{engine.index}</span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {engine.power_hp} hp • {engine.torque_nm} Nm • {engine.displacement} cc
+                      {engine.vvt && ` • ${engine.vvt}`}
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
