@@ -4,7 +4,7 @@ export default async function EnginesListPage({ params }) {
   const { lang } = await params;
 
   const familiesRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?locale=${lang}&populate[engines]=*&sort=code`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?locale=${lang}&populate=*&sort=code`,
     { cache: 'no-store' }
   );
   const familiesData = await familiesRes.json();
