@@ -14,7 +14,7 @@ export default async function Home({ params }) {
 </h1>
 <p className="text-gray-600 text-lg mb-10 max-w-2xl">
   {lang === 'ru'
-    ? 'База знаний по автомобилям BMW: модели, двигатели, опции, ремонт и дооснащение.'
+    ? 'База знаний по классическим моделям BMW: двигатели, опции, ремонт и дооснащение.'
     : 'BMW knowledge base: models, engines, options, repair and retrofit.'}
 </p>
 

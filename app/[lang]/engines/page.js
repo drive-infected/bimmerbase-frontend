@@ -44,7 +44,7 @@ export default async function EnginesListPage({ params }) {
           <h2 className="section-title">
             {lang === 'ru' ? 'Бензиновые двигатели' : 'Petrol Engines'}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
             {petrolEngines.map((engine) => (
               <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
                 <strong className="text-lg block">{engine.index}</strong>
@@ -64,7 +64,7 @@ export default async function EnginesListPage({ params }) {
           <h2 className="section-title">
             {lang === 'ru' ? 'Дизельные двигатели' : 'Diesel Engines'}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
             {dieselEngines.map((engine) => (
               <a key={engine.id} href={`/${lang}/engines/${engine.slug}`} className="card-link">
                 <strong className="text-lg block">{engine.index}</strong>
