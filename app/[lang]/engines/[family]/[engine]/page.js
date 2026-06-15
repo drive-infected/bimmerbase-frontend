@@ -55,7 +55,7 @@ export default async function EnginePage({ params }) {
     if (genIds.length) {
       try {
         const genRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[id][$in]=${genIds.join(',')}&populate=*`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$in]=${genIds.join(',')}&populate=*`,
           { cache: 'no-store' }
         );
         const genData = await genRes.json();
