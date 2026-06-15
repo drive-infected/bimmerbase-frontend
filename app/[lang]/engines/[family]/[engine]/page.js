@@ -27,13 +27,13 @@ function translate(val, map) {
 export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
-  // 1. Загружаем двигатель с engine_family, статьями и базовыми поколениями
+  // 1. Загружаем двигатель с engine_family, статьями и поколениями
   let engine;
   try {
     const engineRes = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
-  { cache: 'no-store' }
-);
+      `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
+      { cache: 'no-store' }
+    );
     const engineData = await engineRes.json();
     engine = engineData.data?.[0];
   } catch {
@@ -47,17 +47,21 @@ export default async function EnginePage({ params }) {
   // 2. Загружаем поколения с их series для правильных ссылок
   let generationsWithSeries = [];
   if (engine.generations?.length) {
-    const genIds = engine.generations.map(g => g.documentId).filter(Boolean);
+    // Strapi возвращает id или documentId — используем оба
+    const genIds = engine.generations
+      .map(g => g.documentId || g.id)
+      .filter(Boolean);
+
     if (genIds.length) {
       try {
         const genRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$in]=${genIds.join(',')}&populate=series`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[id][$in]=${genIds.join(',')}&populate=*`,
           { cache: 'no-store' }
         );
         const genData = await genRes.json();
         generationsWithSeries = genData.data || [];
-      } catch {
-        // если не загрузились, остаётся пустой массив
+      } catch (e) {
+        console.error('Failed to fetch generations for engine', e);
       }
     }
   }
@@ -104,7 +108,7 @@ export default async function EnginePage({ params }) {
           <div className="flex flex-wrap gap-3">
             {generationsWithSeries.map((gen) => (
               <a
-                key={gen.documentId}
+                key={gen.documentId || gen.id}
                 href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
                 className="card-link !p-3"
               >
@@ -121,7 +125,7 @@ export default async function EnginePage({ params }) {
           <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
           <div className="flex flex-col gap-3">
             {filteredArticles.map((article) => (
-              <a key={article.documentId} href={`/${lang}/articles/${article.slug}`} className="card-link">
+              <a key={article.documentId || article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
                 <span className="card-title">{article.title}</span>
                 {article.intro && <p className="card-text">{article.intro}</p>}
               </a>
@@ -133,7 +137,7 @@ export default async function EnginePage({ params }) {
   );
 }
 
-// Вспомогательные компоненты для чистоты основного компонента
+// Вспомогательные компоненты
 function SpecsSection({ engine, lang }) {
   return (
     <div className="mt-8">
