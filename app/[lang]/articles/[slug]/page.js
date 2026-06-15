@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }) {
           <strong>{lang === 'ru' ? 'Двигатели' : 'Engines'}:</strong>
           <div className="flex flex-wrap gap-2 mt-2">
             {article.engines.map((e) => (
-              <a key={e.id} href={`/${lang}/engines/${e.slug}`} className="text-blue-700 no-underline">{e.index}</a>
+              <a key={e.id} href={e.engine_family?.slug ? `/${lang}/engines/${e.engine_family.slug}/${e.slug}` : '#'} className="text-blue-700 no-underline">{e.index}</a>
             ))}
           </div>
         </div>

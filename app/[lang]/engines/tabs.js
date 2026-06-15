@@ -29,7 +29,7 @@ export default function Tabs({ lang, petrolFamilies, dieselFamilies }) {
           return (
             <div key={family.id} className="flex flex-col">
               {/* Карточка семейства */}
-              <a href={`/${lang}/engines?family=${family.slug}`} className="card mb-3 no-underline text-gray-900 block hover:shadow-md transition-shadow">
+              <a href={`/${lang}/engines/${family.slug}/${engine.slug}`} className="card mb-3 no-underline text-gray-900 block hover:shadow-md transition-shadow">
   <h2 className="text-lg font-bold">{family.code}</h2>
   <div className="text-xs text-gray-500 mt-1 space-x-2">
     <span>{family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}</span>

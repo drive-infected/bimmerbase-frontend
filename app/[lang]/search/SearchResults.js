@@ -68,7 +68,7 @@ export default function SearchResults({ lang }) {
 
   const getUrl = (hit) => {
     if (hit._type === 'series') return `/${lang}/models/${hit.series?.slug || 'bmw'}/${hit.slug}`;
-    if (hit._type === 'engine') return `/${lang}/engines/${hit.slug}`;
+    if (hit._type === 'engine') return hit.engine_family?.slug ? `/${lang}/engines/${hit.engine_family.slug}/${hit.slug}` : '#';
     if (hit._type === 'article') return `/${lang}/articles/${hit.slug}`;
     return '#';
   };

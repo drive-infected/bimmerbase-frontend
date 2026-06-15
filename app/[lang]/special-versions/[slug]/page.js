@@ -85,7 +85,7 @@ export default async function SpecialVersionPage({ params }) {
       {sv.engine && (
         <div className="mt-8">
           <h2 className="section-title">{lang === 'ru' ? 'Двигатель' : 'Engine'}</h2>
-          <a href={`/${lang}/engines/${sv.engine.slug}`} className="card-link !p-4 inline-block text-blue-700">
+          <a href={sv.engine.engine_family?.slug ? `/${lang}/engines/${sv.engine.engine_family.slug}/${sv.engine.slug}` : '#'} className="card-link !p-4 inline-block text-blue-700">
             {sv.engine.index} — {sv.engine.power_hp} hp
           </a>
         </div>
