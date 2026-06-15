@@ -110,7 +110,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                     {gen.engines.filter(e => e.fuel_type === 'Petrol').map((engine) => (
                       <a
                         key={engine.id}
-                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
+                        href="#"
                         className="card-link"
                       >
                         <strong className="text-lg block">{engine.index}</strong>
@@ -131,7 +131,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                     {gen.engines.filter(e => e.fuel_type === 'Diesel').map((engine) => (
                       <a
                         key={engine.id}
-                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
+                        href="#"
                         className="card-link"
                       >
                         <strong className="text-lg block">{engine.index}</strong>

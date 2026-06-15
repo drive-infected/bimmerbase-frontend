@@ -28,9 +28,9 @@ export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=generations.series,articles,engine_family`,
-    { cache: 'no-store' }
-  );
+  `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
+  { cache: 'no-store' }
+);
   const data = await res.json();
   const engineData = data.data?.[0];
 

@@ -4,9 +4,9 @@ export default async function GenerationPage({ params }) {
   const { series, generation, lang } = await params;
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[slug][$eq]=${generation}&populate=engines.engine_family,articles,series`,
-    { cache: 'no-store' }
-  );
+  `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[slug][$eq]=${generation}&populate=*`,
+  { cache: 'no-store' }
+);
   const data = await res.json();
   const gen = data.data?.[0];
 
