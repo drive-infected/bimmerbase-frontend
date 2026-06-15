@@ -59,7 +59,7 @@ function renderListItems(children) {
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
 
-  // 1. Загружаем статью с базовыми связями
+  // 1. Загружаем статью со всеми связями
   let article;
   try {
     const articleRes = await fetch(
@@ -99,26 +99,26 @@ export default async function ArticlePage({ params }) {
   }
 
   // 3. Загружаем двигатели с их engine_family для правильных ссылок
-//    Фильтр по locale не применяется, т.к. у Engine нет локализации.
-let enginesWithFamily = [];
-if (article.engines?.length) {
-  const engIds = article.engines
-    .map(e => e.documentId || e.id)
-    .filter(Boolean);
+  //    Фильтр по locale не применяется, так как у Engine нет локализации.
+  let enginesWithFamily = [];
+  if (article.engines?.length) {
+    const engIds = article.engines
+      .map(e => e.documentId || e.id)
+      .filter(Boolean);
 
-  if (engIds.length) {
-    try {
-      const engRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[documentId][$in]=${engIds.join(',')}&populate=engine_family`,
-        { cache: 'no-store' }
-      );
-      const engData = await engRes.json();
-      enginesWithFamily = engData.data || [];
-    } catch (e) {
-      console.error('Failed to fetch engines for article', e);
+    if (engIds.length) {
+      try {
+        const engRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$in]=${engIds.join(',')}&populate=engine_family`,
+          { cache: 'no-store' }
+        );
+        const engData = await engRes.json();
+        enginesWithFamily = engData.data || [];
+      } catch (e) {
+        console.error('Failed to fetch engines for article', e);
+      }
     }
   }
-}
 
   const contentHtml = renderRichText(article.content);
 
