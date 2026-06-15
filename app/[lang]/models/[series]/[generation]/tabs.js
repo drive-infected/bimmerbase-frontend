@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function formatDate(dateString) {
   if (!dateString) return '...';
@@ -63,6 +63,30 @@ function translateFuelType(type, lang) {
 
 export default function Tabs({ lang, gen, modifications, modelCodes }) {
   const [activeTab, setActiveTab] = useState('main');
+  const [enginesWithFamily, setEnginesWithFamily] = useState([]);
+
+  // Загружаем engine_family для каждого двигателя (Strapi v5 не поддерживает [$in])
+  useEffect(() => {
+    if (gen?.engines?.length) {
+      const fetchEngines = async () => {
+        const results = await Promise.all(
+          gen.engines.map(async (engine) => {
+            try {
+              const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$eq]=${engine.documentId}&populate=engine_family`
+              );
+              const d = await res.json();
+              return d.data?.[0] || engine; // fallback к исходному engine
+            } catch {
+              return engine;
+            }
+          })
+        );
+        setEnginesWithFamily(results);
+      };
+      fetchEngines();
+    }
+  }, [gen]);
 
   const tabs = [
     { key: 'main', ru: 'Главное', en: 'Main' },
@@ -99,18 +123,18 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
             </div>
           )}
 
-          {gen.engines?.length > 0 && (
+          {enginesWithFamily.length > 0 && (
             <div className="mt-10">
               <h2 className="section-title">{lang === 'ru' ? 'Двигатели' : 'Engines'}</h2>
               {/* Бензиновые */}
-              {gen.engines.filter(e => e.fuel_type === 'Petrol').length > 0 && (
+              {enginesWithFamily.filter(e => e.fuel_type === 'Petrol').length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-3">{lang === 'ru' ? 'Бензиновые' : 'Petrol'}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {gen.engines.filter(e => e.fuel_type === 'Petrol').map((engine) => (
+                    {enginesWithFamily.filter(e => e.fuel_type === 'Petrol').map((engine) => (
                       <a
                         key={engine.id}
-                        href="#"
+                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
                         className="card-link"
                       >
                         <strong className="text-lg block">{engine.index}</strong>
@@ -124,14 +148,14 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                 </div>
               )}
               {/* Дизельные */}
-              {gen.engines.filter(e => e.fuel_type === 'Diesel').length > 0 && (
+              {enginesWithFamily.filter(e => e.fuel_type === 'Diesel').length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-3">{lang === 'ru' ? 'Дизельные' : 'Diesel'}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {gen.engines.filter(e => e.fuel_type === 'Diesel').map((engine) => (
+                    {enginesWithFamily.filter(e => e.fuel_type === 'Diesel').map((engine) => (
                       <a
                         key={engine.id}
-                        href="#"
+                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
                         className="card-link"
                       >
                         <strong className="text-lg block">{engine.index}</strong>
