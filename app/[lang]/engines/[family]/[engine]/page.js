@@ -28,9 +28,9 @@ export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
   const res = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
-  { cache: 'no-store' }
-);
+    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
+    { cache: 'no-store' }
+  );
   const data = await res.json();
   const engineData = data.data?.[0];
 
@@ -109,14 +109,10 @@ export default async function EnginePage({ params }) {
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
           <div className="flex flex-wrap gap-3">
-            {engineData.generations.map((g) => (
-              <a
-                key={g.id}
-                href={`/${lang}/models/${g.series?.slug || ''}/${g.slug}`}
-                className="card-link !p-3"
-              >
+            {engineData.generations.filter(g => g.locale === lang).map((g) => (
+              <span key={g.id} className="card-link !p-3 text-gray-700 cursor-default">
                 <span className="card-title !mb-0">{g.title}</span>
-              </a>
+              </span>
             ))}
           </div>
         </div>
@@ -127,7 +123,7 @@ export default async function EnginePage({ params }) {
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
           <div className="flex flex-col gap-3">
-            {engineData.articles.map((article) => (
+            {engineData.articles.filter(a => a.locale === lang).map((article) => (
               <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
                 <span className="card-title">{article.title}</span>
                 {article.intro && <p className="card-text">{article.intro}</p>}

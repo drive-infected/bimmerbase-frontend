@@ -56,9 +56,9 @@ export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
 
   const res = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`,
-  { cache: 'no-store' }
-);
+    `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`,
+    { cache: 'no-store' }
+  );
   const data = await res.json();
   const article = data.data?.[0];
 
@@ -120,18 +120,10 @@ export default async function ArticlePage({ params }) {
             {lang === 'ru' ? 'Связанные модели' : 'Related models'}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {article.generations.map((g) => (
-              g.series?.slug ? (
-                <a key={g.id} href={`/${lang}/models/${g.series.slug}/${g.slug}`}
-                   className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
-                >
-                  {g.title}
-                </a>
-              ) : (
-                <span key={g.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
-                  {g.title}
-                </span>
-              )
+            {article.generations.filter(g => g.locale === lang).map((g) => (
+              <span key={g.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
+                {g.title}
+              </span>
             ))}
           </div>
         </section>
@@ -144,18 +136,10 @@ export default async function ArticlePage({ params }) {
             {lang === 'ru' ? 'Связанные двигатели' : 'Related engines'}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {article.engines.map((e) => (
-              e.engine_family?.slug ? (
-                <a key={e.id} href={`/${lang}/engines/${e.engine_family.slug}/${e.slug}`}
-                   className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
-                >
-                  {e.index}
-                </a>
-              ) : (
-                <span key={e.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
-                  {e.index}
-                </span>
-              )
+            {article.engines.filter(e => e.locale === lang).map((e) => (
+              <span key={e.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
+                {e.index}
+              </span>
             ))}
           </div>
         </section>
