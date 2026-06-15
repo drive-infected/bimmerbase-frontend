@@ -31,9 +31,9 @@ export default async function EnginePage({ params }) {
   let engine;
   try {
     const engineRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=engine_family,articles,generations`,
-      { cache: 'no-store' }
-    );
+  `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
+  { cache: 'no-store' }
+);
     const engineData = await engineRes.json();
     engine = engineData.data?.[0];
   } catch {
