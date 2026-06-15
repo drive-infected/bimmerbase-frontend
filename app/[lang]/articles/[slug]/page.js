@@ -21,7 +21,7 @@ function renderListItems(children) {
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
   const res = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate[generations][populate][series]=*&populate[engines][populate][engine_family]=*`,
+  `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=generations,engines,generations.series,engines.engine_family`,
   { cache: 'no-store' }
 );
   const data = await res.json();
