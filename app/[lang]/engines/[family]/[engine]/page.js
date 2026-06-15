@@ -25,8 +25,8 @@ function translate(val, map) {
 }
 
 export default async function EnginePage({ params }) {
-  const { slug, lang } = await params;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`, { cache: 'no-store' });
+  const { engine, family, lang } = await params;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engine}&populate=*`, { cache: 'no-store' });
   const data = await res.json();
   const engine = data.data?.[0];
 
@@ -43,7 +43,7 @@ export default async function EnginePage({ params }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <a href={`/${lang}/engines`} className="text-blue-700 no-underline">← {lang === 'ru' ? 'К списку двигателей' : 'Back to engines'}</a>
+      <a href={`/${lang}/engines/${family}`} className="text-blue-700 no-underline">← {lang === 'ru' ? 'К семейству' : 'Back to family'}</a>
       <h1 className="text-4xl font-bold mt-4">{lang === 'ru' ? 'Двигатель' : 'Engine'} {engine.index}</h1>
       {family && <p className="text-gray-600 mt-2 text-lg">{lang === 'ru' ? 'Семейство' : 'Family'}: {family.code} • {family.cylinders} cyl</p>}
 
