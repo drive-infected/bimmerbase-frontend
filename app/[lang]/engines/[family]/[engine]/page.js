@@ -27,25 +27,43 @@ function translate(val, map) {
 export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=*`,
-    { cache: 'no-store' }
-  );
-  const data = await res.json();
-  const engineData = data.data?.[0];
-
-  if (!engineData) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <a href={`/${lang}/engines/${familySlug}`} className="text-blue-700 no-underline">
-          ← {lang === 'ru' ? 'К семейству' : 'Back to family'}
-        </a>
-        <h1 className="text-2xl font-bold mt-4">{lang === 'ru' ? 'Двигатель не найден' : 'Engine not found'}</h1>
-      </div>
+  // 1. Загружаем двигатель с engine_family, статьями и базовыми поколениями
+  let engine;
+  try {
+    const engineRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engineSlug}&populate=engine_family,articles,generations`,
+      { cache: 'no-store' }
     );
+    const engineData = await engineRes.json();
+    engine = engineData.data?.[0];
+  } catch {
+    return <ErrorMessage lang={lang} familySlug={familySlug} />;
   }
 
-  const familyData = engineData.engine_family;
+  if (!engine) {
+    return <ErrorMessage lang={lang} familySlug={familySlug} />;
+  }
+
+  // 2. Загружаем поколения с их series для правильных ссылок
+  let generationsWithSeries = [];
+  if (engine.generations?.length) {
+    const genIds = engine.generations.map(g => g.documentId).filter(Boolean);
+    if (genIds.length) {
+      try {
+        const genRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$in]=${genIds.join(',')}&populate=series`,
+          { cache: 'no-store' }
+        );
+        const genData = await genRes.json();
+        generationsWithSeries = genData.data || [];
+      } catch {
+        // если не загрузились, остаётся пустой массив
+      }
+    }
+  }
+
+  const family = engine.engine_family;
+  const filteredArticles = (engine.articles || []).filter(a => a.locale === lang);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -58,73 +76,52 @@ export default async function EnginePage({ params }) {
           <>
             <span className="mx-2">/</span>
             <a href={`/${lang}/engines/${familySlug}`} className="text-blue-700 no-underline hover:underline">
-              {familyData?.code || familySlug}
+              {family?.code || familySlug}
             </a>
           </>
         )}
         <span className="mx-2">/</span>
-        <span className="text-gray-700">{engineData.index}</span>
+        <span className="text-gray-700">{engine.index}</span>
       </nav>
 
-      <h1 className="text-4xl font-bold mt-2">{lang === 'ru' ? 'Двигатель' : 'Engine'} {engineData.index}</h1>
-      {familyData && (
+      <h1 className="text-4xl font-bold mt-2">{lang === 'ru' ? 'Двигатель' : 'Engine'} {engine.index}</h1>
+      {family && (
         <p className="text-gray-600 mt-2 text-lg">
-          {lang === 'ru' ? 'Семейство' : 'Family'}: {familyData.code} • {familyData.cylinders} cyl
+          {lang === 'ru' ? 'Семейство' : 'Family'}: {family.code} • {family.cylinders} cyl
         </p>
       )}
 
       {/* Характеристики */}
-      <div className="mt-8">
-        <h2 className="section-title">{lang === 'ru' ? 'Характеристики' : 'Specifications'}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {engineData.power_hp && <SpecItem label={lang === 'ru' ? 'Мощность' : 'Power'} value={`${engineData.power_hp} hp`} />}
-          {engineData.torque_nm && <SpecItem label={lang === 'ru' ? 'Крутящий момент' : 'Torque'} value={`${engineData.torque_nm} Nm`} />}
-          {engineData.displacement && <SpecItem label={lang === 'ru' ? 'Объём' : 'Displacement'} value={`${engineData.displacement} cc`} />}
-          {engineData.bore_stroke && <SpecItem label={lang === 'ru' ? 'Диаметр × Ход' : 'Bore × Stroke'} value={engineData.bore_stroke} />}
-          {engineData.compression_ratio && <SpecItem label={lang === 'ru' ? 'Степень сжатия' : 'Compression'} value={engineData.compression_ratio} />}
-          {engineData.valves_per_cylinder && <SpecItem label={lang === 'ru' ? 'Клапанов' : 'Valves'} value={engineData.valves_per_cylinder} />}
-          {engineData.max_rpm && <SpecItem label={lang === 'ru' ? 'Макс. обороты' : 'Max RPM'} value={`${engineData.max_rpm} rpm`} />}
-          {engineData.timing_drive && <SpecItem label={lang === 'ru' ? 'ГРМ' : 'Timing'} value={translate(engineData.timing_drive, { Chain: lang === 'ru' ? 'Цепь' : 'Chain', Belt: lang === 'ru' ? 'Ремень' : 'Belt' })} />}
-          {engineData.vvt && <SpecItem label={lang === 'ru' ? 'Фазорегуляторы' : 'VVT'} value={engineData.vvt} />}
-          {engineData.injection && <SpecItem label={lang === 'ru' ? 'Впрыск' : 'Injection'} value={engineData.injection} />}
-          {engineData.ecu && <SpecItem label="ECU" value={engineData.ecu} />}
-        </div>
-      </div>
+      <SpecsSection engine={engine} lang={lang} />
 
       {/* Обслуживание */}
-      {(engineData.oil_type || engineData.oil_capacity || engineData.coolant_type || engineData.coolant_capacity) && (
-        <div className="mt-10">
-          <h2 className="section-title">{lang === 'ru' ? 'Обслуживание' : 'Maintenance'}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {engineData.oil_type && <SpecItem label={lang === 'ru' ? 'Масло' : 'Oil'} value={engineData.oil_type} />}
-            {engineData.oil_capacity && <SpecItem label={lang === 'ru' ? 'Объём масла' : 'Oil capacity'} value={`${engineData.oil_capacity} L`} />}
-            {engineData.coolant_type && <SpecItem label={lang === 'ru' ? 'Тип ОЖ' : 'Coolant type'} value={engineData.coolant_type} />}
-            {engineData.coolant_capacity && <SpecItem label={lang === 'ru' ? 'Объём ОЖ' : 'Coolant capacity'} value={`${engineData.coolant_capacity} L`} />}
-          </div>
-        </div>
-      )}
+      <MaintenanceSection engine={engine} lang={lang} />
 
       {/* Применяемость */}
-      {engineData.generations?.length > 0 && (
+      {generationsWithSeries.length > 0 && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
           <div className="flex flex-wrap gap-3">
-            {engineData.generations.filter(g => g.locale === lang).map((g) => (
-              <span key={g.id} className="card-link !p-3 text-gray-700 cursor-default">
-                <span className="card-title !mb-0">{g.title}</span>
-              </span>
+            {generationsWithSeries.map((gen) => (
+              <a
+                key={gen.documentId}
+                href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
+                className="card-link !p-3"
+              >
+                <span className="card-title !mb-0">{gen.title}</span>
+              </a>
             ))}
           </div>
         </div>
       )}
 
       {/* Статьи */}
-      {engineData.articles?.length > 0 && (
+      {filteredArticles.length > 0 && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
           <div className="flex flex-col gap-3">
-            {engineData.articles.filter(a => a.locale === lang).map((article) => (
-              <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+            {filteredArticles.map((article) => (
+              <a key={article.documentId} href={`/${lang}/articles/${article.slug}`} className="card-link">
                 <span className="card-title">{article.title}</span>
                 {article.intro && <p className="card-text">{article.intro}</p>}
               </a>
@@ -136,12 +133,60 @@ export default async function EnginePage({ params }) {
   );
 }
 
+// Вспомогательные компоненты для чистоты основного компонента
+function SpecsSection({ engine, lang }) {
+  return (
+    <div className="mt-8">
+      <h2 className="section-title">{lang === 'ru' ? 'Характеристики' : 'Specifications'}</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {engine.power_hp && <SpecItem label={lang === 'ru' ? 'Мощность' : 'Power'} value={`${engine.power_hp} hp`} />}
+        {engine.torque_nm && <SpecItem label={lang === 'ru' ? 'Крутящий момент' : 'Torque'} value={`${engine.torque_nm} Nm`} />}
+        {engine.displacement && <SpecItem label={lang === 'ru' ? 'Объём' : 'Displacement'} value={`${engine.displacement} cc`} />}
+        {engine.bore_stroke && <SpecItem label={lang === 'ru' ? 'Диаметр × Ход' : 'Bore × Stroke'} value={engine.bore_stroke} />}
+        {engine.compression_ratio && <SpecItem label={lang === 'ru' ? 'Степень сжатия' : 'Compression'} value={engine.compression_ratio} />}
+        {engine.valves_per_cylinder && <SpecItem label={lang === 'ru' ? 'Клапанов' : 'Valves'} value={engine.valves_per_cylinder} />}
+        {engine.max_rpm && <SpecItem label={lang === 'ru' ? 'Макс. обороты' : 'Max RPM'} value={`${engine.max_rpm} rpm`} />}
+        {engine.timing_drive && <SpecItem label={lang === 'ru' ? 'ГРМ' : 'Timing'} value={translate(engine.timing_drive, { Chain: lang === 'ru' ? 'Цепь' : 'Chain', Belt: lang === 'ru' ? 'Ремень' : 'Belt' })} />}
+        {engine.vvt && <SpecItem label={lang === 'ru' ? 'Фазорегуляторы' : 'VVT'} value={engine.vvt} />}
+        {engine.injection && <SpecItem label={lang === 'ru' ? 'Впрыск' : 'Injection'} value={engine.injection} />}
+        {engine.ecu && <SpecItem label="ECU" value={engine.ecu} />}
+      </div>
+    </div>
+  );
+}
+
+function MaintenanceSection({ engine, lang }) {
+  if (!engine.oil_type && !engine.oil_capacity && !engine.coolant_type && !engine.coolant_capacity) return null;
+  return (
+    <div className="mt-10">
+      <h2 className="section-title">{lang === 'ru' ? 'Обслуживание' : 'Maintenance'}</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {engine.oil_type && <SpecItem label={lang === 'ru' ? 'Масло' : 'Oil'} value={engine.oil_type} />}
+        {engine.oil_capacity && <SpecItem label={lang === 'ru' ? 'Объём масла' : 'Oil capacity'} value={`${engine.oil_capacity} L`} />}
+        {engine.coolant_type && <SpecItem label={lang === 'ru' ? 'Тип ОЖ' : 'Coolant type'} value={engine.coolant_type} />}
+        {engine.coolant_capacity && <SpecItem label={lang === 'ru' ? 'Объём ОЖ' : 'Coolant capacity'} value={`${engine.coolant_capacity} L`} />}
+      </div>
+    </div>
+  );
+}
+
 function SpecItem({ label, value }) {
   return (
     <div className="card !p-3">
       <span className="text-xs text-gray-500">{label}</span>
       <br />
       <span className="text-sm font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function ErrorMessage({ lang, familySlug }) {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      <a href={`/${lang}/engines/${familySlug}`} className="text-blue-700 no-underline">
+        ← {lang === 'ru' ? 'К семейству' : 'Back to family'}
+      </a>
+      <h1 className="text-2xl font-bold mt-4">{lang === 'ru' ? 'Двигатель не найден' : 'Engine not found'}</h1>
     </div>
   );
 }
