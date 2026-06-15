@@ -1,6 +1,6 @@
 // app/[lang]/articles/[slug]/page.js
 // Статья с подключением связанных сущностей (модели, двигатели) через дополнительные запросы.
-// Ссылки строятся на основе полных данных (series, engine_family).
+// Для двигателей загрузка идёт по одному из-за ограничения Strapi v5 на фильтр [$in].
 
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }) {
   if (article.generations?.length) {
     const genIds = article.generations
       .filter(g => g.locale === lang)
-      .map(g => g.documentId || g.id)
+      .map(g => g.documentId)
       .filter(Boolean);
 
     if (genIds.length) {
@@ -98,26 +98,26 @@ export default async function ArticlePage({ params }) {
     }
   }
 
-  // 3. Загружаем двигатели с их engine_family для правильных ссылок
-  //    Фильтр по locale не применяется, так как у Engine нет локализации.
+  // 3. Загружаем двигатели с engine_family по одному (Strapi v5 не поддерживает [$in] для engines)
   let enginesWithFamily = [];
   if (article.engines?.length) {
-    const engIds = article.engines
-      .map(e => e.documentId || e.id)
-      .filter(Boolean);
-
-    if (engIds.length) {
+    const fetchEngine = async (docId) => {
       try {
-        const engRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$in]=${engIds.join(',')}&populate=engine_family`,
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$eq]=${docId}&populate=engine_family`,
           { cache: 'no-store' }
         );
-        const engData = await engRes.json();
-        enginesWithFamily = engData.data || [];
-      } catch (e) {
-        console.error('Failed to fetch engines for article', e);
+        const d = await res.json();
+        return d.data?.[0];
+      } catch {
+        return null;
       }
-    }
+    };
+
+    const results = await Promise.all(
+      article.engines.map(e => fetchEngine(e.documentId))
+    );
+    enginesWithFamily = results.filter(Boolean);
   }
 
   const contentHtml = renderRichText(article.content);
@@ -167,7 +167,7 @@ export default async function ArticlePage({ params }) {
           <div className="flex flex-wrap gap-2">
             {generationsWithSeries.map((gen) => (
               <a
-                key={gen.documentId || gen.id}
+                key={gen.documentId}
                 href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
                 className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
               >
@@ -187,7 +187,7 @@ export default async function ArticlePage({ params }) {
           <div className="flex flex-wrap gap-2">
             {enginesWithFamily.map((eng) => (
               <a
-                key={eng.documentId || eng.id}
+                key={eng.documentId}
                 href={`/${lang}/engines/${eng.engine_family?.slug || ''}/${eng.slug}`}
                 className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
               >
