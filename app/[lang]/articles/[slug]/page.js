@@ -20,7 +20,10 @@ function renderListItems(children) {
 
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`, { cache: 'no-store' });
+  const res = await fetch(
+  `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate[generations][populate][series]=*&populate[engines][populate][engine_family]=*`,
+  { cache: 'no-store' }
+);
   const data = await res.json();
   const article = data.data?.[0];
 
@@ -49,8 +52,12 @@ export default async function ArticlePage({ params }) {
           <strong>{lang === 'ru' ? 'Модели' : 'Models'}:</strong>
           <div className="flex flex-wrap gap-2 mt-2">
             {article.generations.map((g) => (
-              <a key={g.id} href={`/${lang}/models/${g.series?.slug || 'bmw'}/${g.slug}`} className="text-blue-700 no-underline">{g.title}</a>
-            ))}
+  g.series?.slug ? (
+    <a key={g.id} href={`/${lang}/models/${g.series.slug}/${g.slug}`} className="text-blue-700 no-underline">{g.title}</a>
+  ) : (
+    <span key={g.id} className="text-gray-700">{g.title}</span>
+  )
+))}
           </div>
         </div>
       )}
@@ -60,8 +67,12 @@ export default async function ArticlePage({ params }) {
           <strong>{lang === 'ru' ? 'Двигатели' : 'Engines'}:</strong>
           <div className="flex flex-wrap gap-2 mt-2">
             {article.engines.map((e) => (
-              <a key={e.id} href={e.engine_family?.slug ? `/${lang}/engines/${e.engine_family.slug}/${e.slug}` : '#'} className="text-blue-700 no-underline">{e.index}</a>
-            ))}
+  e.engine_family?.slug ? (
+    <a key={e.id} href={`/${lang}/engines/${e.engine_family.slug}/${e.slug}`} className="text-blue-700 no-underline">{e.index}</a>
+  ) : (
+    <span key={e.id} className="text-gray-700">{e.index}</span>
+  )
+))}
           </div>
         </div>
       )}
