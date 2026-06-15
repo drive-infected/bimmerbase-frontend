@@ -1,3 +1,7 @@
+// app/[lang]/articles/[slug]/page.js
+// Статья с подключением связанных сущностей (модели, двигатели) через дополнительные запросы.
+// Ссылки строятся на основе полных данных (series, engine_family).
+
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   const html = blocks.map((block) => {
@@ -55,24 +59,65 @@ function renderListItems(children) {
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`,
-    { cache: 'no-store' }
-  );
-  const data = await res.json();
-  const article = data.data?.[0];
+  // 1. Загружаем статью с базовыми связями
+  let article;
+  try {
+    const articleRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`,
+      { cache: 'no-store' }
+    );
+    const articleData = await articleRes.json();
+    article = articleData.data?.[0];
+  } catch {
+    return <ErrorMessage lang={lang} />;
+  }
 
   if (!article) {
-    return (
-      <main className="max-w-3xl mx-auto px-4 py-10">
-        <a href={`/${lang}/articles`} className="text-blue-700 no-underline">
-          ← {lang === 'ru' ? 'База знаний' : 'Knowledge Base'}
-        </a>
-        <h1 className="text-2xl font-bold mt-4">
-          {lang === 'ru' ? 'Статья не найдена' : 'Article not found'}
-        </h1>
-      </main>
-    );
+    return <ErrorMessage lang={lang} />;
+  }
+
+  // 2. Загружаем поколения с их series для правильных ссылок
+  let generationsWithSeries = [];
+  if (article.generations?.length) {
+    const genIds = article.generations
+      .filter(g => g.locale === lang)
+      .map(g => g.documentId || g.id)
+      .filter(Boolean);
+
+    if (genIds.length) {
+      try {
+        const genRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$in]=${genIds.join(',')}&populate=series`,
+          { cache: 'no-store' }
+        );
+        const genData = await genRes.json();
+        generationsWithSeries = genData.data || [];
+      } catch (e) {
+        console.error('Failed to fetch generations for article', e);
+      }
+    }
+  }
+
+  // 3. Загружаем двигатели с их engine_family для правильных ссылок
+  let enginesWithFamily = [];
+  if (article.engines?.length) {
+    const engIds = article.engines
+      .filter(e => e.locale === lang)
+      .map(e => e.documentId || e.id)
+      .filter(Boolean);
+
+    if (engIds.length) {
+      try {
+        const engRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[documentId][$in]=${engIds.join(',')}&populate=engine_family`,
+          { cache: 'no-store' }
+        );
+        const engData = await engRes.json();
+        enginesWithFamily = engData.data || [];
+      } catch (e) {
+        console.error('Failed to fetch engines for article', e);
+      }
+    }
   }
 
   const contentHtml = renderRichText(article.content);
@@ -114,36 +159,57 @@ export default async function ArticlePage({ params }) {
       </div>
 
       {/* Связанные модели */}
-      {article.generations?.length > 0 && (
+      {generationsWithSeries.length > 0 && (
         <section className="mt-12 p-5 bg-gray-50 rounded-xl">
           <h2 className="text-lg font-semibold mb-3">
             {lang === 'ru' ? 'Связанные модели' : 'Related models'}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {article.generations.filter(g => g.locale === lang).map((g) => (
-              <span key={g.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
-                {g.title}
-              </span>
+            {generationsWithSeries.map((gen) => (
+              <a
+                key={gen.documentId || gen.id}
+                href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
+                className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
+              >
+                {gen.title}
+              </a>
             ))}
           </div>
         </section>
       )}
 
       {/* Связанные двигатели */}
-      {article.engines?.length > 0 && (
+      {enginesWithFamily.length > 0 && (
         <section className="mt-3 p-5 bg-gray-50 rounded-xl">
           <h2 className="text-lg font-semibold mb-3">
             {lang === 'ru' ? 'Связанные двигатели' : 'Related engines'}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {article.engines.filter(e => e.locale === lang).map((e) => (
-              <span key={e.id} className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm">
-                {e.index}
-              </span>
+            {enginesWithFamily.map((eng) => (
+              <a
+                key={eng.documentId || eng.id}
+                href={`/${lang}/engines/${eng.engine_family?.slug || ''}/${eng.slug}`}
+                className="inline-block px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-700 no-underline hover:border-blue-300 transition-colors text-sm"
+              >
+                {eng.index}
+              </a>
             ))}
           </div>
         </section>
       )}
+    </main>
+  );
+}
+
+function ErrorMessage({ lang }) {
+  return (
+    <main className="max-w-3xl mx-auto px-4 py-10">
+      <a href={`/${lang}/articles`} className="text-blue-700 no-underline">
+        ← {lang === 'ru' ? 'База знаний' : 'Knowledge Base'}
+      </a>
+      <h1 className="text-2xl font-bold mt-4">
+        {lang === 'ru' ? 'Статья не найдена' : 'Article not found'}
+      </h1>
     </main>
   );
 }
