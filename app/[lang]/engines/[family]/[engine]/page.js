@@ -1,3 +1,7 @@
+// app/[lang]/engines/[family]/[engine]/page.js
+// Загружает двигатель, его семейство, поколения с сериями и статьи.
+// Для получения series используется отдельный запрос к generations по documentId.
+
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks.map((block) => {
@@ -27,7 +31,7 @@ function translate(val, map) {
 export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
-  // 1. Загружаем двигатель с engine_family, статьями и поколениями
+  // 1. Загружаем двигатель со всеми связями
   let engine;
   try {
     const engineRes = await fetch(
@@ -44,25 +48,21 @@ export default async function EnginePage({ params }) {
     return <ErrorMessage lang={lang} familySlug={familySlug} />;
   }
 
-  // 2. Загружаем поколения с их series для правильных ссылок
-  let generationsWithSeries = [];
-  if (engine.generations?.length) {
-    // Strapi возвращает id или documentId — используем оба
-    const genIds = engine.generations
-      .map(g => g.documentId || g.id)
-      .filter(Boolean);
+  // 2. Извлекаем ID поколений (только для текущей локали)
+  const localGenerations = (engine.generations || []).filter(g => g.locale === lang);
+  let generationWithSeries = null;
 
-    if (genIds.length) {
-      try {
-        const genRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$in]=${genIds.join(',')}&populate=*`,
-          { cache: 'no-store' }
-        );
-        const genData = await genRes.json();
-        generationsWithSeries = genData.data || [];
-      } catch (e) {
-        console.error('Failed to fetch generations for engine', e);
-      }
+  if (localGenerations.length > 0) {
+    const genDocId = localGenerations[0].documentId || localGenerations[0].id;
+    try {
+      const genRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$eq]=${genDocId}&populate=series`,
+        { cache: 'no-store' }
+      );
+      const genData = await genRes.json();
+      generationWithSeries = genData.data?.[0];
+    } catch (e) {
+      console.error('Failed to fetch generation', e);
     }
   }
 
@@ -102,19 +102,16 @@ export default async function EnginePage({ params }) {
       <MaintenanceSection engine={engine} lang={lang} />
 
       {/* Применяемость */}
-      {generationsWithSeries.length > 0 && (
+      {generationWithSeries && (
         <div className="mt-10">
           <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
           <div className="flex flex-wrap gap-3">
-            {generationsWithSeries.map((gen) => (
-              <a
-                key={gen.documentId || gen.id}
-                href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
-                className="card-link !p-3"
-              >
-                <span className="card-title !mb-0">{gen.title}</span>
-              </a>
-            ))}
+            <a
+              href={`/${lang}/models/${generationWithSeries.series?.slug || ''}/${generationWithSeries.slug}`}
+              className="card-link !p-3"
+            >
+              <span className="card-title !mb-0">{generationWithSeries.title}</span>
+            </a>
           </div>
         </div>
       )}
