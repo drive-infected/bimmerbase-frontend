@@ -68,18 +68,16 @@ export default async function Home({ params }) {
 
   return (
     <div>
-                  {/* Hero-секция */}
+      {/* Hero-секция */}
       <section
-        className="relative bg-cover text-gray-900 pt-4 md:pt-4"
+        className="relative bg-cover text-gray-900 pt-4 pb-16 md:pt-4 md:pb-36"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundPosition: 'center 70%',
           backgroundSize: 'cover',
-          aspectRatio: '16 / 9',
-          maxHeight: '560px',
         }}
       >
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10 h-full flex flex-col justify-start">
+        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
             {t.heroTitle}
           </h1>
