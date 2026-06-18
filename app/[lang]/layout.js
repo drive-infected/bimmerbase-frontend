@@ -1,10 +1,10 @@
 import '../globals.css';
-import UserMenu from './UserMenu';
 import LanguageSwitcher from './LanguageSwitcher';
+import Navigation from './Navigation';
 
 export const metadata = {
   title: 'BimmerBase',
-  description: 'BMW knowledge base',
+  description: 'База знаний по классическим автомобилям BMW',
 };
 
 export default async function RootLayout({ children, params }) {
@@ -12,63 +12,57 @@ export default async function RootLayout({ children, params }) {
 
   const t = {
     title: 'BimmerBase',
-    models: lang === 'ru' ? 'Модели' : 'Models',
-    engines: lang === 'ru' ? 'Двигатели' : 'Engines',
-    specialVersions: lang === 'ru' ? 'Спецверсии' : 'Special Versions',
-    options: lang === 'ru' ? 'Опции' : 'Options',
-    trimGroups: lang === 'ru' ? 'Подборки' : 'Collections',
-    knowledge: lang === 'ru' ? 'База знаний' : 'Knowledge Base',
-    garage: lang === 'ru' ? 'Гараж' : 'Garage',
     search: lang === 'ru' ? 'Поиск' : 'Search',
+    searchPlaceholder: lang === 'ru' ? 'Поиск по сайту...' : 'Search the site...',
+    login: lang === 'ru' ? 'Вход' : 'Login',
     footer: lang === 'ru' ? 'BimmerBase © 2026' : 'BimmerBase © 2026',
-};
-
-  const navLinks = [
-  { href: `/${lang}/models`, label: t.models },
-  { href: `/${lang}/engines`, label: t.engines },
-  { href: `/${lang}/special-versions`, label: t.specialVersions },
-  { href: `/${lang}/options`, label: t.options },
-  { href: `/${lang}/trim-groups`, label: t.trimGroups },
-  { href: `/${lang}/articles`, label: t.knowledge },
-];
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-gray-900 text-white sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        {/* Верхний ряд: логотип, поиск, вход, язык */}
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          <a href={`/${lang}`} className="text-white font-bold text-lg shrink-0 hover:text-blue-300 transition-colors no-underline">
+          {/* Логотип */}
+          <a href={`/${lang}`} className="text-xl font-bold text-gray-900 no-underline shrink-0">
             {t.title}
           </a>
 
-          {/* Десктопная навигация */}
-          <nav className="hidden md:flex gap-5 text-sm flex-1 flex-wrap">
-            {navLinks.map((link) => (
-              <a key={link.href} href={link.href} className="text-gray-300 hover:text-white transition-colors no-underline">
-                {link.label}
-              </a>
-            ))}
-          </nav>
+          {/* Поиск */}
+          <form
+            action={`/${lang}/search`}
+            method="get"
+            className="flex-1 max-w-md mx-auto hidden sm:block"
+          >
+            <div className="relative">
+              <input
+                type="text"
+                name="q"
+                placeholder={t.searchPlaceholder}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              />
+              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+          </form>
 
-          <div className="flex items-center gap-3 ml-auto">
-  <a href={`/${lang}/search`} className="text-gray-300 hover:text-white text-sm no-underline">
-  {t.search} 🔍
-</a>
-  <a href={`/${lang}/garage`} className="text-gray-300 hover:text-white text-sm no-underline">
-    {lang === 'ru' ? 'Гараж' : 'Garage'}
-  </a>
-  <UserMenu lang={lang} />
-  <LanguageSwitcher currentLang={lang} />
-</div>
+          {/* Правая группа */}
+          <div className="flex items-center gap-3 ml-auto shrink-0">
+            <a
+              href={`/${lang}/auth`}
+              className="text-sm text-gray-600 hover:text-blue-700 no-underline transition-colors"
+            >
+              {t.login}
+            </a>
+            <LanguageSwitcher currentLang={lang} />
+          </div>
         </div>
 
-        {/* Мобильная навигация */}
-        <nav className="md:hidden flex gap-3 overflow-x-auto px-4 pb-3 text-sm">
-          {navLinks.map((link) => (
-            <a key={link.href} href={link.href} className="text-gray-300 hover:text-white shrink-0 no-underline">
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        {/* Нижний ряд: навигация */}
+        <Navigation lang={lang} />
       </header>
 
       <main className="flex-1">
