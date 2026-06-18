@@ -68,25 +68,23 @@ export default async function Home({ params }) {
 
   return (
     <div>
-      {/* Hero-секция */}
+            {/* Hero-секция */}
       <section
-        className="relative bg-cover bg-center text-white py-16 md:py-24"
+        className="relative bg-cover bg-top text-gray-900 py-16 md:py-24"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundPosition: 'center 70%',
+          backgroundPosition: 'center 25%',
           backgroundSize: 'cover',
         }}
       >
-        {/* Тёмный оверлей для читаемости текста */}
-        <div className="absolute inset-0 bg-black/70"></div>
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 drop-shadow-lg">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 drop-shadow-sm">
             {t.heroTitle}
           </h1>
-          <p className="text-lg md:text-xl text-gray-200 mb-2 drop-shadow">
+          <p className="text-lg md:text-xl text-gray-700 mb-2 drop-shadow-sm">
             {t.heroSubtitle}
           </p>
-          <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto mb-8 drop-shadow">
+          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto mb-8 drop-shadow-sm">
             {t.heroDescription}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -98,7 +96,7 @@ export default async function Home({ params }) {
             </a>
             <a
               href={`/${lang}/search`}
-              className="px-8 py-3 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors text-center no-underline"
+              className="px-8 py-3 rounded-lg border border-gray-800 text-gray-800 hover:bg-gray-100 transition-colors text-center no-underline"
             >
               {t.search}
             </a>
@@ -209,13 +207,13 @@ function QuickLink({ href, icon, title, description }) {
   return (
     <a
       href={href}
-      className="card-link flex flex-col items-center text-center py-6"
-      style={{ minHeight: '150px', justifyContent: 'center' }}
+      className="card-link flex flex-col items-center text-center py-4"
+      style={{ minHeight: '130px', justifyContent: 'center' }}
     >
-      <div className="flex items-center justify-center w-full mb-2">
+      <div className="flex items-center justify-center w-full mb-1">
         {icon}
       </div>
-      <h3 className="font-semibold mb-1">{title}</h3>
+      <h3 className="font-semibold text-sm mb-0.5">{title}</h3>
       <p className="text-xs text-gray-500">{description}</p>
     </a>
   );
