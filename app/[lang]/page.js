@@ -68,16 +68,18 @@ export default async function Home({ params }) {
 
   return (
     <div>
-            {/* Hero-секция */}
+                  {/* Hero-секция */}
       <section
-        className="relative bg-cover text-gray-900 pt-4 pb-16 md:pt-4 md:pb-36"
+        className="relative bg-cover text-gray-900 pt-4 md:pt-4"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundPosition: 'center 70%',
           backgroundSize: 'cover',
+          aspectRatio: '16 / 9',
+          maxHeight: '560px',
         }}
       >
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+        <div className="max-w-5xl mx-auto px-4 text-center relative z-10 h-full flex flex-col justify-start">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
             {t.heroTitle}
           </h1>
@@ -88,7 +90,7 @@ export default async function Home({ params }) {
       </section>
 
       {/* Быстрая навигация */}
-      <section className="bg-gray-50 py-12">
+      <section className="py-12">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-8">
             {t.quickNavTitle}
@@ -123,7 +125,7 @@ export default async function Home({ params }) {
       </section>
 
       {/* Модельный ряд */}
-      <section className="py-12">
+      <section className="bg-gray-50 py-12">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">{t.modelRangeTitle}</h2>
@@ -150,7 +152,7 @@ export default async function Home({ params }) {
 
       {/* Последние статьи */}
       {articles.length > 0 && (
-        <section className="bg-gray-50 py-12">
+        <section className="py-12">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t.latestArticles}</h2>
