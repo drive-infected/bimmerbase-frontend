@@ -75,6 +75,9 @@ export default async function Home({ params }) {
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundSize: '100% auto',
           backgroundRepeat: 'no-repeat',
+          paddingTop: '0',
+          paddingBottom: '0',
+          height: '230 px',
         }}
       >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10 h-full flex flex-col md:block"
