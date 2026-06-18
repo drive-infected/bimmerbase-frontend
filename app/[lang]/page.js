@@ -70,19 +70,18 @@ export default async function Home({ params }) {
     <div>
       {/* Hero-секция */}
       <section
-        className="relative text-gray-900 pt-4 pb-16 md:pt-4 md:pb-72"
+        className="hero-bg relative text-gray-900 pt-4 pb-16 md:pt-4 md:pb-96"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundPosition: 'center 70%',
           backgroundSize: '100% auto',
           backgroundRepeat: 'no-repeat',
         }}
       >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 md:mb-0">
             {t.heroTitle}
           </h1>
-          <p className="text-lg md:text-xl text-gray-700">
+          <p className="text-lg md:text-xl text-gray-700 mt-48 md:mt-0">
             {t.heroSubtitle}
           </p>
         </div>

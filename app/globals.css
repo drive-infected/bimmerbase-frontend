@@ -83,6 +83,16 @@ body {
   border-bottom: 2px solid #1d4ed8;
 }
 
+.hero-bg {
+  background-position: top center;
+}
+
+@media (min-width: 768px) {
+  .hero-bg {
+    background-position: center 70%;
+  }
+}
+
 .tag {
   background-color: #1d4ed8;
   color: white;
