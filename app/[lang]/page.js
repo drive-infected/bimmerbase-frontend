@@ -82,10 +82,10 @@ export default async function Home({ params }) {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href={`/${lang}/models`}
+              href={`/${lang}/auth`}
               className="btn-primary text-center no-underline"
             >
-              {t.exploreModels}
+              {lang === 'ru' ? 'Вход' : 'Login'}
             </a>
             <a
               href={`/${lang}/search`}
@@ -202,7 +202,9 @@ function QuickLink({ href, icon, title, description }) {
       href={href}
       className="card-link flex flex-col items-center text-center"
     >
-      <div className="text-3xl mb-3">{icon}</div>
+      <div className="h-12 flex items-center justify-center mb-2">
+        {icon}
+      </div>
       <h3 className="font-semibold mb-1">{title}</h3>
       <p className="text-xs text-gray-500">{description}</p>
     </a>
