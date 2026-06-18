@@ -68,17 +68,17 @@ export default async function Home({ params }) {
 
   return (
     <div>
-      {/* Hero-секция */}
+            {/* Hero-секция */}
       <section
         className="relative bg-cover bg-center text-white py-16 md:py-24"
         style={{
-          backgroundImage: 'url(/images/hero-bg.jpeg)',
+          backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundPosition: 'center 30%',
-          backgroundColor: '#1a1a2e',
-          backgroundBlendMode: 'overlay',
           backgroundSize: 'cover',
         }}
       >
+        {/* Тёмный оверлей для читаемости текста */}
+        <div className="absolute inset-0 bg-black/50"></div>
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 drop-shadow-lg">
             {t.heroTitle}
@@ -212,10 +212,10 @@ function QuickLink({ href, icon, title, description }) {
       className="card-link flex flex-col items-center text-center py-6"
       style={{ minHeight: '160px', justifyContent: 'center' }}
     >
-      <div className="h-12 w-12 flex items-center justify-center mb-2">
+      <div className="flex items-center justify-center" style={{ height: '48px', width: '48px' }}>
         {icon}
       </div>
-      <h3 className="font-semibold mb-1">{title}</h3>
+      <h3 className="font-semibold mt-2 mb-1">{title}</h3>
       <p className="text-xs text-gray-500">{description}</p>
     </a>
   );
