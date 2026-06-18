@@ -69,12 +69,15 @@ export default async function Home({ params }) {
   return (
     <div>
             {/* Hero-секция */}
+            {/* Hero-секция */}
       <section
         className="relative bg-cover bg-center text-white py-16 md:py-24"
         style={{
           backgroundImage: 'url(https://www.bmwgroup-classic.com/content/dam/bmw-group-websites/bmwgroup-com/classic/2024/images/bmw-classic-models-header.jpg)',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backgroundPosition: 'center 30%',
+          backgroundColor: '#1a1a2e',
           backgroundBlendMode: 'overlay',
+          backgroundSize: 'cover',
         }}
       >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
@@ -207,9 +210,9 @@ function QuickLink({ href, icon, title, description }) {
   return (
     <a
       href={href}
-      className="card-link flex flex-col items-center text-center justify-center py-6"
+      className="card-link flex flex-col items-center justify-center text-center py-6"
     >
-      <div className="h-10 w-10 flex items-center justify-center mb-2">
+      <div className="h-12 w-12 flex items-center justify-center mb-2">
         {icon}
       </div>
       <h3 className="font-semibold mb-1">{title}</h3>
