@@ -70,22 +70,27 @@ export default async function Home({ params }) {
     <div>
       {/* Hero-секция */}
       <section
-        className="hero-bg relative text-gray-900 pt-4 pb-0 md:pt-8 md:pb-96"
+        className="hero-bg relative text-gray-900 md:pt-8 md:pb-96"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundSize: '100% auto',
           backgroundRepeat: 'no-repeat',
-          paddingTop: '0',
-          paddingBottom: '0',
-          height: '230 px',
+          paddingTop: '0px',
+          height: '200px',
         }}
       >
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10 h-full flex flex-col md:block"
-             style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+        <div
+          className="max-w-5xl mx-auto px-4 text-center relative z-10 flex flex-col md:block"
+          style={{
+            height: '200px',
+            paddingTop: '0px',
+            paddingBottom: '0px',
+          }}
+        >
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
             {t.heroTitle}
           </h1>
-          <div className="flex-1 md:hidden"></div>
+          <div className="flex-1 md:hidden" style={{ height: '100px' }}></div>
           <p className="text-lg md:text-xl text-gray-700 md:mt-0">
             {t.heroSubtitle}
           </p>
