@@ -78,7 +78,7 @@ export default async function Home({ params }) {
         }}
       >
         {/* Тёмный оверлей для читаемости текста */}
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="absolute inset-0 bg-black/70"></div>
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 drop-shadow-lg">
             {t.heroTitle}
@@ -210,7 +210,7 @@ function QuickLink({ href, icon, title, description }) {
     <a
       href={href}
       className="card-link flex flex-col items-center text-center py-6"
-      style={{ minHeight: '160px', justifyContent: 'center' }}
+      style={{ minHeight: '150px', justifyContent: 'center' }}
     >
       <div className="flex items-center justify-center w-full mb-2">
         {icon}
