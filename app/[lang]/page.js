@@ -68,23 +68,23 @@ export default async function Home({ params }) {
 
   return (
     <div>
-            {/* Hero-секция */}
+      {/* Hero-секция */}
       <section
-        className="relative bg-cover bg-top text-gray-900 py-16 md:py-24"
+        className="relative bg-cover text-gray-900 pt-8 pb-16 md:pt-12 md:pb-24"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundPosition: 'center 25%',
+          backgroundPosition: 'center 70%',
           backgroundSize: 'cover',
         }}
       >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 drop-shadow-sm">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
             {t.heroTitle}
           </h1>
-          <p className="text-lg md:text-xl text-gray-700 mb-2 drop-shadow-sm">
+          <p className="text-lg md:text-xl text-gray-700 mb-2">
             {t.heroSubtitle}
           </p>
-          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto mb-8 drop-shadow-sm">
+          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto mb-8">
             {t.heroDescription}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
