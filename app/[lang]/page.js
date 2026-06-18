@@ -68,12 +68,12 @@ export default async function Home({ params }) {
 
   return (
     <div>
-            {/* Hero-секция */}
+      {/* Hero-секция */}
       <section
         className="relative bg-cover bg-center text-white py-16 md:py-24"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundPosition: 'center 30%',
+          backgroundPosition: 'center 50%',
           backgroundSize: 'cover',
         }}
       >
