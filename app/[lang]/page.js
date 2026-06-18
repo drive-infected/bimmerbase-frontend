@@ -68,7 +68,7 @@ export default async function Home({ params }) {
 
   return (
     <div>
-      {/* Hero-секция */}
+            {/* Hero-секция */}
       <section
         className="hero-bg relative text-gray-900 h-[200px] md:h-auto md:pt-8 md:pb-96"
         style={{
@@ -81,14 +81,14 @@ export default async function Home({ params }) {
         <div
           className="max-w-5xl mx-auto px-4 text-center relative z-10 flex flex-col md:block h-[200px] md:h-auto"
           style={{
-            paddingTop: '0px',
+            paddingTop: '8px',
             paddingBottom: '0px',
           }}
         >
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
             {t.heroTitle}
           </h1>
-          <div className="flex-1 md:hidden" style={{ height: '100px' }}></div>
+          <div className="flex-1 md:hidden" style={{ height: '92px' }}></div>
           <p className="text-lg md:text-xl text-gray-700 md:mt-0">
             {t.heroSubtitle}
           </p>
@@ -96,7 +96,7 @@ export default async function Home({ params }) {
       </section>
 
       {/* Быстрая навигация */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-8">
             {t.quickNavTitle}
@@ -131,7 +131,7 @@ export default async function Home({ params }) {
       </section>
 
       {/* Модельный ряд */}
-      <section className="bg-gray-50 py-12">
+      <section className="bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">{t.modelRangeTitle}</h2>
@@ -158,7 +158,7 @@ export default async function Home({ params }) {
 
       {/* Последние статьи */}
       {articles.length > 0 && (
-        <section className="py-12">
+        <section className="py-8">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t.latestArticles}</h2>
