@@ -8,20 +8,12 @@ export default function LanguageSwitcher({ currentLang }) {
   const targetLang = currentLang === 'ru' ? 'en' : 'ru';
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      {currentLang === 'ru' ? (
-        <>
-          <span className="text-white font-bold">RU</span>
-          <span className="text-gray-600">|</span>
-          <a href={`/en${pathWithoutLang}`} className="text-gray-400 hover:text-white no-underline">EN</a>
-        </>
-      ) : (
-        <>
-          <a href={`/ru${pathWithoutLang}`} className="text-gray-400 hover:text-white no-underline">RU</a>
-          <span className="text-gray-600">|</span>
-          <span className="text-white font-bold">EN</span>
-        </>
-      )}
-    </div>
+    <a
+      href={`/${targetLang}${pathWithoutLang}`}
+      className="text-sm text-gray-500 hover:text-blue-700 no-underline transition-colors"
+      title={targetLang === 'ru' ? 'Русский' : 'English'}
+    >
+      {targetLang.toUpperCase()}
+    </a>
   );
 }
