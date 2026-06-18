@@ -81,14 +81,14 @@ export default async function Home({ params }) {
         <div
           className="max-w-5xl mx-auto px-4 text-center relative z-10 flex flex-col md:block h-[200px] md:h-auto"
           style={{
-            paddingTop: '8px',
+            paddingTop: '20px',
             paddingBottom: '0px',
           }}
         >
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
             {t.heroTitle}
           </h1>
-          <div className="flex-1 md:hidden" style={{ height: '92px' }}></div>
+          <div className="flex-1 md:hidden" style={{ height: '80px' }}></div>
           <p className="text-lg md:text-xl text-gray-700 md:mt-0">
             {t.heroSubtitle}
           </p>
