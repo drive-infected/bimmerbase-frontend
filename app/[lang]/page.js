@@ -70,11 +70,12 @@ export default async function Home({ params }) {
     <div>
       {/* Hero-секция */}
       <section
-        className="relative bg-cover text-gray-900 pt-4 pb-16 md:pt-4 md:pb-36"
+        className="relative text-gray-900 pt-4 pb-16 md:pt-4 md:pb-72"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundPosition: 'center 70%',
-          backgroundSize: 'cover',
+          backgroundSize: '100% auto',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
