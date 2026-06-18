@@ -68,9 +68,9 @@ export default async function Home({ params }) {
 
   return (
     <div>
-            {/* Hero-секция */}
+      {/* Hero-секция */}
       <section
-        className="relative bg-cover text-gray-900 pt-12 pb-16 md:py-36"
+        className="relative bg-cover text-gray-900 pt-4 pb-16 md:py-36"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
           backgroundPosition: 'center 70%',
@@ -84,14 +84,6 @@ export default async function Home({ params }) {
           <p className="text-lg md:text-xl text-gray-700">
             {t.heroSubtitle}
           </p>
-          <div className="mt-8">
-            <a
-              href={`/${lang}/auth`}
-              className="btn-primary text-center no-underline"
-            >
-              {lang === 'ru' ? 'Вход' : 'Login'}
-            </a>
-          </div>
         </div>
       </section>
 
