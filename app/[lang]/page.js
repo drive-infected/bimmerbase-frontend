@@ -73,7 +73,7 @@ export default async function Home({ params }) {
         className="relative bg-cover bg-center text-white py-16 md:py-24"
         style={{
           backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundPosition: 'center 50%',
+          backgroundPosition: 'center 70%',
           backgroundSize: 'cover',
         }}
       >
@@ -212,10 +212,10 @@ function QuickLink({ href, icon, title, description }) {
       className="card-link flex flex-col items-center text-center py-6"
       style={{ minHeight: '160px', justifyContent: 'center' }}
     >
-      <div className="flex items-center justify-center" style={{ height: '48px', width: '48px' }}>
+      <div className="flex items-center justify-center w-full mb-2">
         {icon}
       </div>
-      <h3 className="font-semibold mt-2 mb-1">{title}</h3>
+      <h3 className="font-semibold mb-1">{title}</h3>
       <p className="text-xs text-gray-500">{description}</p>
     </a>
   );
