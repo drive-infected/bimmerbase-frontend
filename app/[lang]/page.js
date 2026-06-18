@@ -98,9 +98,9 @@ export default async function Home({ params }) {
       {/* Быстрая навигация */}
       <section className="py-8">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8">
+          {/*<h2 className="text-2xl font-bold text-center mb-8">
             {t.quickNavTitle}
-          </h2>
+          </h2>*/}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <QuickLink
               href={`/${lang}/models`}
@@ -215,7 +215,7 @@ function NavIcon({ type }) {
   const icons = {
     models: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
       </svg>
     ),
     engines: (
