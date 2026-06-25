@@ -175,7 +175,14 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
           {Object.keys(groupedFamilies).length === 0 && (
             <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}</p>
           )}
-          {Object.entries(groupedFamilies).map(([fuel, configs]) => (
+          {Object.entries(groupedFamilies)
+            .sort(([a], [b]) => {
+                // Petrol первым, Diesel вторым
+                if (a === 'Petrol') return -1;
+                if (b === 'Petrol') return 1;
+                return 0;
+            })
+            .map(([fuel, configs]) => (
             <div key={fuel}>
               <h2 className="section-title mb-4">
                 {fuel === 'Petrol' ? (lang === 'ru' ? 'Бензиновые' : 'Petrol') : (lang === 'ru' ? 'Дизельные' : 'Diesel')}
