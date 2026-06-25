@@ -126,7 +126,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             onClick={() => setActiveTab(tab.key)}
             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
               activeTab === tab.key
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-[#0066B1] text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
