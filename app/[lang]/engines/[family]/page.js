@@ -1,9 +1,9 @@
-import FamilyTabs from './tabs'; // создадим клиентский компонент для вкладок
+import FamilyContent from './content'; // клиентский компонент только для двигателей
 
 export default async function EngineFamilyPage({ params }) {
   const { family, lang } = await params;
 
-  // 1. Загружаем семейство с двигателями
+  // 1. Семейство с двигателями
   const famRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?locale=${lang}&filters[slug][$eq]=${family}&populate=*`,
     { cache: 'no-store' }
@@ -20,7 +20,7 @@ export default async function EngineFamilyPage({ params }) {
     );
   }
 
-  // 2. Загружаем поколения, где используется это семейство
+  // 2. Поколения, где используется семейство
   let generations = [];
   try {
     const genRes = await fetch(
@@ -30,10 +30,9 @@ export default async function EngineFamilyPage({ params }) {
     const genData = await genRes.json();
     generations = genData.data || [];
   } catch (e) {
-    console.error('Failed to load generations for family', e);
+    console.error('Failed to load generations', e);
   }
 
-  // 3. Сортируем двигатели по объёму
   const engines = (fam.engines || []).sort((a, b) => {
     if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
     return (a.index || '').localeCompare(b.index || '');
@@ -67,8 +66,35 @@ export default async function EngineFamilyPage({ params }) {
         </div>
       )}
 
-      {/* Вкладки: Двигатели и Применяемость */}
-      <FamilyTabs lang={lang} engines={engines} generations={generations} familySlug={fam.slug} />
+      {/* Двигатели семейства */}
+      <div className="mt-10">
+        <h2 className="section-title">{lang === 'ru' ? 'Двигатели' : 'Engines'}</h2>
+        <FamilyContent lang={lang} engines={engines} familySlug={fam.slug} />
+      </div>
+
+      {/* Поколения */}
+      {generations.length > 0 && (
+        <div className="mt-10">
+          <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {generations.map((gen) => (
+              <a
+                key={gen.id}
+                href={`/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`}
+                className="card-link"
+              >
+                <span className="card-title">{gen.title}</span>
+                {gen.series && (
+                  <div className="card-text mt-1 text-sm">{gen.series.title}</div>
+                )}
+                <div className="card-text text-xs mt-1">
+                  {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
