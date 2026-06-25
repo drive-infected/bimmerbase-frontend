@@ -97,16 +97,28 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
   });
   const families = Object.values(familyMap).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
 
+  // Группировка семейств по типу топлива и конфигурации
+  const groupedFamilies = {};
+  families.forEach((family) => {
+    const fuel = family.fuel_type; // Petrol или Diesel
+    const config = family.engine_type === 'Inline'
+      ? (lang === 'ru' ? 'Рядный' : 'Inline') + ' ' + family.cylinders
+      : family.engine_type + family.cylinders; // V8, V12 и т.д.
+
+    if (!groupedFamilies[fuel]) groupedFamilies[fuel] = {};
+    if (!groupedFamilies[fuel][config]) groupedFamilies[fuel][config] = [];
+    groupedFamilies[fuel][config].push(family);
+  });
+
   const tabs = [
     { key: 'main', ru: 'Главное', en: 'Main' },
+    { key: 'engines', ru: 'Двигатели', en: 'Engines' },
     { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
-    { key: 'lci', ru: 'Рестайлинг', en: 'Facelift' },
     { key: 'codes', ru: 'Коды моделей', en: 'Model Codes' },
   ];
 
   return (
     <div className="mt-8">
-      {/* Табы в новом стиле */}
       <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6">
         {tabs.map((tab) => (
           <button
@@ -133,32 +145,11 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             </div>
           )}
 
-          {/* Семейства двигателей */}
-          {families.length > 0 && (
-            <div className="mt-10">
-              <h2 className="section-title">{lang === 'ru' ? 'Семейства двигателей' : 'Engine Families'}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {families.map((family) => (
-                  <a
-                    key={family.slug}
-                    href={`/${lang}/engines/${family.slug}`}
-                    className="card-link"
-                  >
-                    <span className="card-title">{family.code}</span>
-                    <div className="card-text mt-2 space-y-1">
-                      <div>
-                        {family.cylinders} cyl •{' '}
-                        {family.layout === 'Longitudinal'
-                          ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
-                          : lang === 'ru' ? 'Поперечное' : 'Transverse'}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
-                      </div>
-                    </div>
-                  </a>
-                ))}
-              </div>
+          {/* Рестайлинг (LCI) */}
+          {gen.lci_info && (
+            <div className="mt-10 rich-text">
+              <h2 className="section-title">LCI</h2>
+              <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
             </div>
           )}
 
@@ -176,6 +167,49 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             </div>
           )}
         </>
+      )}
+
+      {/* Вкладка: Двигатели (семейства с группировкой) */}
+      {activeTab === 'engines' && (
+        <div className="space-y-8">
+          {Object.keys(groupedFamilies).length === 0 && (
+            <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}</p>
+          )}
+          {Object.entries(groupedFamilies).map(([fuel, configs]) => (
+            <div key={fuel}>
+              <h2 className="section-title mb-4">
+                {fuel === 'Petrol' ? (lang === 'ru' ? 'Бензиновые' : 'Petrol') : (lang === 'ru' ? 'Дизельные' : 'Diesel')}
+              </h2>
+              {Object.entries(configs).map(([config, familiesInConfig]) => (
+                <div key={config} className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">{config}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {familiesInConfig.map((family) => (
+                      <a
+                        key={family.slug}
+                        href={`/${lang}/engines/${family.slug}`}
+                        className="card-link"
+                      >
+                        <span className="card-title">{family.code}</span>
+                        <div className="card-text mt-2 space-y-1">
+                          <div>
+                            {family.cylinders} cyl •{' '}
+                            {family.layout === 'Longitudinal'
+                              ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
+                              : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Вкладка: Модификации */}
@@ -231,17 +265,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             </div>
           )}
         </div>
-      )}
-
-      {/* Вкладка: Рестайлинг */}
-      {activeTab === 'lci' && (
-        gen.lci_info ? (
-          <div className="rich-text">
-            <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
-          </div>
-        ) : (
-          <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Информация о рестайлинге будет добавлена.' : 'Facelift information will be added.'}</p>
-        )
       )}
 
       {/* Вкладка: Коды моделей */}
