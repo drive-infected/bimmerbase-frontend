@@ -100,10 +100,10 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
   // Группировка семейств по типу топлива и конфигурации
   const groupedFamilies = {};
   families.forEach((family) => {
-    const fuel = family.fuel_type; // Petrol или Diesel
+    const fuel = family.fuel_type;
     const config = family.engine_type === 'Inline'
       ? (lang === 'ru' ? 'Рядный' : 'Inline') + ' ' + family.cylinders
-      : family.engine_type + family.cylinders; // V8, V12 и т.д.
+      : family.engine_type + family.cylinders;
 
     if (!groupedFamilies[fuel]) groupedFamilies[fuel] = {};
     if (!groupedFamilies[fuel][config]) groupedFamilies[fuel][config] = [];
@@ -119,12 +119,13 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
 
   return (
     <div className="mt-8">
-      <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6">
+      {/* Табы с горизонтальной прокруткой и фиксированной высотой */}
+      <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
               activeTab === tab.key
                 ? 'bg-[#0066B1] text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -145,7 +146,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             </div>
           )}
 
-          {/* Рестайлинг (LCI) */}
           {gen.lci_info && (
             <div className="mt-10 rich-text">
               <h2 className="section-title">LCI</h2>
@@ -169,7 +169,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </>
       )}
 
-      {/* Вкладка: Двигатели (семейства с группировкой) */}
+      {/* Вкладка: Двигатели */}
       {activeTab === 'engines' && (
         <div className="space-y-8">
           {Object.keys(groupedFamilies).length === 0 && (
@@ -177,45 +177,40 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
           )}
           {Object.entries(groupedFamilies)
             .sort(([a], [b]) => {
-                // Petrol первым, Diesel вторым
-                if (a === 'Petrol') return -1;
-                if (b === 'Petrol') return 1;
-                return 0;
+              if (a === 'Petrol') return -1;
+              if (b === 'Petrol') return 1;
+              return 0;
             })
             .map(([fuel, configs]) => (
-            <div key={fuel}>
-              <h2 className="section-title mb-4">
-                {fuel === 'Petrol' ? (lang === 'ru' ? 'Бензиновые' : 'Petrol') : (lang === 'ru' ? 'Дизельные' : 'Diesel')}
-              </h2>
-              {Object.entries(configs).map(([config, familiesInConfig]) => (
-                <div key={config} className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">{config}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {familiesInConfig.map((family) => (
-                      <a
-                        key={family.slug}
-                        href={`/${lang}/engines/${family.slug}`}
-                        className="card-link"
-                      >
-                        <span className="card-title">{family.code}</span>
-                        <div className="card-text mt-2 space-y-1">
-                          <div>
-                            {family.cylinders} cyl •{' '}
-                            {family.layout === 'Longitudinal'
-                              ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
-                              : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+              <div key={fuel}>
+                <h2 className="section-title mb-4">
+                  {fuel === 'Petrol' ? (lang === 'ru' ? 'Бензиновые' : 'Petrol') : (lang === 'ru' ? 'Дизельные' : 'Diesel')}
+                </h2>
+                {Object.entries(configs).map(([config, familiesInConfig]) => (
+                  <div key={config} className="mb-6">
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">{config}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {familiesInConfig.map((family) => (
+                        <a key={family.slug} href={`/${lang}/engines/${family.slug}`} className="card-link">
+                          <span className="card-title">{family.code}</span>
+                          <div className="card-text mt-2 space-y-1">
+                            <div>
+                              {family.cylinders} cyl •{' '}
+                              {family.layout === 'Longitudinal'
+                                ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
+                                : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-400">
-                            {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
-                          </div>
-                        </div>
-                      </a>
-                    ))}
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
         </div>
       )}
 

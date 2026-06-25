@@ -18,16 +18,16 @@ export default function EngineTabs({ lang, petrolFamilies, dieselFamilies }) {
 
   return (
     <div className="mt-8">
-      <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6">
+      <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         <button onClick={() => setTab('petrol')}
-          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-            tab === 'petrol' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+            tab === 'petrol' ? 'bg-[#0066B1] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}>
           {lang === 'ru' ? 'Бензиновые' : 'Petrol'} ({petrolFamilies.length})
         </button>
         <button onClick={() => setTab('diesel')}
-          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-            tab === 'diesel' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+            tab === 'diesel' ? 'bg-[#0066B1] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}>
           {lang === 'ru' ? 'Дизельные' : 'Diesel'} ({dieselFamilies.length})
         </button>
