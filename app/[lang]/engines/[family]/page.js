@@ -1,12 +1,15 @@
+import FamilyTabs from './tabs'; // создадим клиентский компонент для вкладок
+
 export default async function EngineFamilyPage({ params }) {
   const { family, lang } = await params;
 
-  const res = await fetch(
+  // 1. Загружаем семейство с двигателями
+  const famRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?locale=${lang}&filters[slug][$eq]=${family}&populate=*`,
     { cache: 'no-store' }
   );
-  const data = await res.json();
-  const fam = data.data?.[0];
+  const famData = await famRes.json();
+  const fam = famData.data?.[0];
 
   if (!fam) {
     return (
@@ -17,6 +20,20 @@ export default async function EngineFamilyPage({ params }) {
     );
   }
 
+  // 2. Загружаем поколения, где используется это семейство
+  let generations = [];
+  try {
+    const genRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[engines][engine_family][slug][$eq]=${family}&populate=series&sort=title`,
+      { cache: 'no-store' }
+    );
+    const genData = await genRes.json();
+    generations = genData.data || [];
+  } catch (e) {
+    console.error('Failed to load generations for family', e);
+  }
+
+  // 3. Сортируем двигатели по объёму
   const engines = (fam.engines || []).sort((a, b) => {
     if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
     return (a.index || '').localeCompare(b.index || '');
@@ -50,23 +67,8 @@ export default async function EngineFamilyPage({ params }) {
         </div>
       )}
 
-      {engines.length > 0 && (
-        <div className="mt-10">
-          <h2 className="section-title">{lang === 'ru' ? 'Двигатели' : 'Engines'}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {engines.map((engine) => (
-              <a key={engine.id} href={`/${lang}/engines/${fam.slug}/${engine.slug}`} className="card-link">
-                <span className="card-title">{engine.index}</span>
-                <div className="card-text mt-2 space-y-1">
-                  <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
-                  <div>{engine.displacement} cc</div>
-                  {engine.vvt && engine.vvt !== 'None' && <div>{engine.vvt}</div>}
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Вкладки: Двигатели и Применяемость */}
+      <FamilyTabs lang={lang} engines={engines} generations={generations} familySlug={fam.slug} />
     </div>
   );
 }
