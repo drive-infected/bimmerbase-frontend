@@ -1,6 +1,5 @@
 // app/[lang]/engines/[family]/[engine]/page.js
-// Загружает двигатель, его семейство, поколения с сериями и статьи.
-// Для получения series используется отдельный запрос к generations по documentId.
+// Страница двигателя с группировкой модификаций по поколениям
 
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -31,7 +30,7 @@ function translate(val, map) {
 export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
-  // 1. Загружаем двигатель со всеми связями
+  // 1. Двигатель со всеми связями
   let engine;
   try {
     const engineRes = await fetch(
@@ -48,23 +47,32 @@ export default async function EnginePage({ params }) {
     return <ErrorMessage lang={lang} familySlug={familySlug} />;
   }
 
-  // 2. Извлекаем ID поколений (только для текущей локали)
-  const localGenerations = (engine.generations || []).filter(g => g.locale === lang);
-  let generationWithSeries = null;
-
-  if (localGenerations.length > 0) {
-    const genDocId = localGenerations[0].documentId || localGenerations[0].id;
-    try {
-      const genRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[documentId][$eq]=${genDocId}&populate=series`,
-        { cache: 'no-store' }
-      );
-      const genData = await genRes.json();
-      generationWithSeries = genData.data?.[0];
-    } catch (e) {
-      console.error('Failed to fetch generation', e);
-    }
+  // 2. Модификации, сгруппированные по поколениям
+  let modifications = [];
+  try {
+    const modRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][slug][$eq]=${engineSlug}&populate=generation`,
+      { cache: 'no-store' }
+    );
+    const modData = await modRes.json();
+    modifications = modData.data || [];
+  } catch (e) {
+    console.error('Failed to fetch modifications', e);
   }
+
+  const groupedByGeneration = {};
+  modifications.forEach(mod => {
+    const gen = mod.generation;
+    if (!gen) return;
+    const key = gen.slug;
+    if (!groupedByGeneration[key]) {
+      groupedByGeneration[key] = {
+        generation: gen,
+        modifications: [],
+      };
+    }
+    groupedByGeneration[key].modifications.push(mod);
+  });
 
   const family = engine.engine_family;
   const filteredArticles = (engine.articles || []).filter(a => a.locale === lang);
@@ -101,18 +109,41 @@ export default async function EnginePage({ params }) {
       {/* Обслуживание */}
       <MaintenanceSection engine={engine} lang={lang} />
 
-      {/* Применяемость */}
-      {generationWithSeries && (
+      {/* Модификации по поколениям */}
+      {Object.keys(groupedByGeneration).length > 0 && (
         <div className="mt-10">
-          <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href={`/${lang}/models/${generationWithSeries.series?.slug || ''}/${generationWithSeries.slug}`}
-              className="card-link !p-3"
-            >
-              <span className="card-title !mb-0">{generationWithSeries.title}</span>
-            </a>
-          </div>
+          <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
+          {Object.values(groupedByGeneration).map(({ generation, modifications }) => (
+            <div key={generation.slug} className="mb-6">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                <a
+                  href={`/${lang}/models/${generation.series?.slug || ''}/${generation.slug}`}
+                  className="text-blue-700 no-underline hover:underline"
+                >
+                  {generation.title}
+                </a>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {modifications.map(mod => (
+                  <div key={mod.id} className="card">
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="card-title !mb-0">{mod.title}</span>
+                      {mod.lci && (
+                        <span className={`card-badge ${mod.lci === 'LCI' ? 'card-badge-green' : 'card-badge-gray'}`}>
+                          {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="card-text mt-2 space-y-1">
+                      <div>{mod.power_hp} hp • {mod.torque_nm} Nm</div>
+                      <div>{mod.displacement} cc</div>
+                      {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -134,7 +165,6 @@ export default async function EnginePage({ params }) {
   );
 }
 
-// Вспомогательные компоненты
 function SpecsSection({ engine, lang }) {
   return (
     <div className="mt-8">
