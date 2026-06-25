@@ -1,4 +1,4 @@
-import Tabs from './tabs';
+import EngineTabs from './tabs';
 
 export default async function EnginesListPage({ params }) {
   const { lang } = await params;
@@ -18,7 +18,7 @@ export default async function EnginesListPage({ params }) {
       <h1 className="text-3xl font-bold mb-8">
         {lang === 'ru' ? 'Двигатели BMW' : 'BMW Engines'}
       </h1>
-      <Tabs lang={lang} petrolFamilies={petrolFamilies} dieselFamilies={dieselFamilies} />
+      <EngineTabs lang={lang} petrolFamilies={petrolFamilies} dieselFamilies={dieselFamilies} />
     </div>
   );
 }
