@@ -61,11 +61,10 @@ function translateFuelType(type, lang) {
   return type;
 }
 
-export default function Tabs({ lang, gen, modifications, modelCodes }) {
+export default function Tabs({ lang, gen, modifications, specialVersions, modelCodes }) {
   const [activeTab, setActiveTab] = useState('main');
   const [enginesWithFamily, setEnginesWithFamily] = useState([]);
 
-  // Загружаем engine_family для каждого двигателя (Strapi v5 не поддерживает [$in])
   useEffect(() => {
     if (gen?.engines?.length) {
       const fetchEngines = async () => {
@@ -76,7 +75,7 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                 `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$eq]=${engine.documentId}&populate=engine_family`
               );
               const d = await res.json();
-              return d.data?.[0] || engine; // fallback к исходному engine
+              return d.data?.[0] || engine;
             } catch {
               return engine;
             }
@@ -88,24 +87,35 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
     }
   }, [gen]);
 
+  // Уникальные семейства из двигателей
+  const familyMap = {};
+  enginesWithFamily.forEach((engine) => {
+    const fam = engine.engine_family;
+    if (fam && !familyMap[fam.slug]) {
+      familyMap[fam.slug] = fam;
+    }
+  });
+  const families = Object.values(familyMap).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+
   const tabs = [
     { key: 'main', ru: 'Главное', en: 'Main' },
+    { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
     { key: 'lci', ru: 'Рестайлинг', en: 'Facelift' },
     { key: 'codes', ru: 'Коды моделей', en: 'Model Codes' },
   ];
 
   return (
     <div className="mt-8">
-      {/* Табы */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      {/* Табы в новом стиле */}
+      <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
               activeTab === tab.key
-                ? 'bg-white border border-gray-200 border-b-white text-blue-700 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
             {lang === 'ru' ? tab.ru : tab.en}
@@ -123,77 +133,30 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
             </div>
           )}
 
-          {enginesWithFamily.length > 0 && (
+          {/* Семейства двигателей */}
+          {families.length > 0 && (
             <div className="mt-10">
-              <h2 className="section-title">{lang === 'ru' ? 'Двигатели' : 'Engines'}</h2>
-              {/* Бензиновые */}
-              {enginesWithFamily.filter(e => e.fuel_type === 'Petrol').length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 mb-3">{lang === 'ru' ? 'Бензиновые' : 'Petrol'}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {enginesWithFamily.filter(e => e.fuel_type === 'Petrol').map((engine) => (
-                      <a
-                        key={engine.id}
-                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
-                        className="card-link"
-                      >
-                        <strong className="text-lg block">{engine.index}</strong>
-                        <div className="text-sm text-gray-600 mt-2 space-y-1">
-                          <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
-                          <div>{engine.displacement} cc</div>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Дизельные */}
-              {enginesWithFamily.filter(e => e.fuel_type === 'Diesel').length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-3">{lang === 'ru' ? 'Дизельные' : 'Diesel'}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {enginesWithFamily.filter(e => e.fuel_type === 'Diesel').map((engine) => (
-                      <a
-                        key={engine.id}
-                        href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
-                        className="card-link"
-                      >
-                        <span className="card-title">{engine.index}</span>
-                        <div className="card-text mt-2">
-                        <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
-                        <div>{engine.displacement} cc</div>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {modifications.length > 0 && (
-            <div className="mt-10">
-              <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
+              <h2 className="section-title">{lang === 'ru' ? 'Семейства двигателей' : 'Engine Families'}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {modifications.map((mod) => (
-                  <div className="card">
-                    <div className="flex justify-between items-start gap-2">
-                        <span className="card-title !mb-0">{mod.title}</span>
-                        {mod.lci && (
-                        <span className={`card-badge ${mod.lci === 'LCI' ? 'card-badge-green' : 'card-badge-gray'}`}>
-                            {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
-                        </span>
-                        )}
-                    </div>
+                {families.map((family) => (
+                  <a
+                    key={family.slug}
+                    href={`/${lang}/engines/${family.slug}`}
+                    className="card-link"
+                  >
+                    <span className="card-title">{family.code}</span>
                     <div className="card-text mt-2 space-y-1">
-                        <div>{translateFuelType(mod.fuel_type, lang)}</div>
-                        {mod.engines?.length > 0 && (
-                        <div>{mod.engines[0].index} • {mod.engines[0].displacement} cc</div>
-                        )}
-                        {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
-                        {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
+                      <div>
+                        {family.cylinders} cyl •{' '}
+                        {family.layout === 'Longitudinal'
+                          ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
+                          : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {family.production_start?.substring(0, 4)}–{family.production_end?.substring(0, 4)}
+                      </div>
                     </div>
-                    </div>
+                  </a>
                 ))}
               </div>
             </div>
@@ -207,12 +170,67 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                   <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
                     <span className="card-title">{article.title}</span>
                     {article.intro && <p className="card-text mt-1">{article.intro}</p>}
-                    </a>
+                  </a>
                 ))}
               </div>
             </div>
           )}
         </>
+      )}
+
+      {/* Вкладка: Модификации */}
+      {activeTab === 'modifications' && (
+        <div className="space-y-10">
+          {modifications.length > 0 && (
+            <div>
+              <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {modifications.map((mod) => (
+                  <div key={mod.id} className="card">
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="card-title !mb-0">{mod.title}</span>
+                      {mod.lci && (
+                        <span className={`card-badge ${mod.lci === 'LCI' ? 'card-badge-green' : 'card-badge-gray'}`}>
+                          {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="card-text mt-2 space-y-1">
+                      <div>{translateFuelType(mod.fuel_type, lang)}</div>
+                      {mod.engines?.length > 0 && (
+                        <div>{mod.engines[0].index} • {mod.engines[0].displacement} cc</div>
+                      )}
+                      {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
+                      {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {specialVersions.length > 0 && (
+            <div>
+              <h2 className="section-title">{lang === 'ru' ? 'Спецверсии' : 'Special Versions'}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {specialVersions.map((sv) => (
+                  <a key={sv.id} href={`/${lang}/special-versions/${sv.slug}`} className="card-link">
+                    <span className="card-title">{sv.title}</span>
+                    {sv.engine && (
+                      <div className="card-text mt-2 space-y-1">
+                        <div>{sv.engine.index} • {sv.engine.power_hp} hp</div>
+                      </div>
+                    )}
+                    <div className="card-text text-xs mt-1">
+                      {sv.production_start?.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
+                      {sv.production_count && ` • ${sv.production_count} ${lang === 'ru' ? 'шт.' : 'units'}`}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Вкладка: Рестайлинг */}
