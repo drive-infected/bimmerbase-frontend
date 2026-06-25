@@ -44,10 +44,10 @@ export default function Tabs({ lang, petrolFamilies, dieselFamilies }) {
               <div className="flex flex-col gap-2">
                 {engines.map((engine) => (
                   <a key={engine.id} href={`/${lang}/engines/${family.slug}/${engine.slug}`} className="card-link !p-3">
-                    <span className="text-sm font-semibold">{engine.index}</span>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {engine.power_hp} hp • {engine.torque_nm} Nm • {engine.displacement} cc
-                      {engine.vvt && engine.vvt !== 'None' && ` • ${engine.vvt}`}
+                    <span className="card-title text-sm">{engine.index}</span>
+                    <div className="card-text text-xs mt-1">
+                    {engine.power_hp} hp • {engine.torque_nm} Nm • {engine.displacement} cc
+                    {engine.vvt && engine.vvt !== 'None' && ` • ${engine.vvt}`}
                     </div>
                   </a>
                 ))}

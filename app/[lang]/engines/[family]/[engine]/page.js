@@ -122,9 +122,9 @@ export default async function EnginePage({ params }) {
           <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
           <div className="flex flex-col gap-3">
             {filteredArticles.map((article) => (
-              <a key={article.documentId || article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+              <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
                 <span className="card-title">{article.title}</span>
-                {article.intro && <p className="card-text">{article.intro}</p>}
+                {article.intro && <p className="card-text mt-1">{article.intro}</p>}
               </a>
             ))}
           </div>

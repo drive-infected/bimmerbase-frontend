@@ -158,10 +158,10 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
                         href={engine.engine_family?.slug ? `/${lang}/engines/${engine.engine_family.slug}/${engine.slug}` : '#'}
                         className="card-link"
                       >
-                        <strong className="text-lg block">{engine.index}</strong>
-                        <div className="text-sm text-gray-600 mt-2 space-y-1">
-                          <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
-                          <div>{engine.displacement} cc</div>
+                        <span className="card-title">{engine.index}</span>
+                        <div className="card-text mt-2">
+                        <div>{engine.power_hp} hp • {engine.torque_nm} Nm</div>
+                        <div>{engine.displacement} cc</div>
                         </div>
                       </a>
                     ))}
@@ -176,24 +176,24 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
               <h2 className="section-title">{lang === 'ru' ? 'Модификации' : 'Modifications'}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {modifications.map((mod) => (
-                  <div key={mod.id} className="card">
+                  <div className="card">
                     <div className="flex justify-between items-start gap-2">
-                      <strong className="text-lg">{mod.title}</strong>
-                      {mod.lci && (
-                        <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${mod.lci === 'LCI' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
+                        <span className="card-title !mb-0">{mod.title}</span>
+                        {mod.lci && (
+                        <span className={`card-badge ${mod.lci === 'LCI' ? 'card-badge-green' : 'card-badge-gray'}`}>
+                            {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
                         </span>
-                      )}
+                        )}
                     </div>
-                    <div className="text-sm text-gray-600 mt-2 space-y-1">
-                      <div>{translateFuelType(mod.fuel_type, lang)}</div>
-                      {mod.engines?.length > 0 && (
+                    <div className="card-text mt-2 space-y-1">
+                        <div>{translateFuelType(mod.fuel_type, lang)}</div>
+                        {mod.engines?.length > 0 && (
                         <div>{mod.engines[0].index} • {mod.engines[0].displacement} cc</div>
-                      )}
-                      {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
-                      {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
+                        )}
+                        {mod.acceleration_0_100 && <div>0–100: {mod.acceleration_0_100} s</div>}
+                        {mod.max_speed && <div>{lang === 'ru' ? 'Макс. скорость' : 'Max speed'}: {mod.max_speed} km/h</div>}
                     </div>
-                  </div>
+                    </div>
                 ))}
               </div>
             </div>
@@ -204,10 +204,10 @@ export default function Tabs({ lang, gen, modifications, modelCodes }) {
               <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
               <div className="flex flex-col gap-3">
                 {gen.articles.map((article) => (
-                  <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link !p-4">
-                    <strong>{article.title}</strong>
-                    {article.intro && <p className="text-sm text-gray-600 mt-1">{article.intro}</p>}
-                  </a>
+                  <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+                    <span className="card-title">{article.title}</span>
+                    {article.intro && <p className="card-text mt-1">{article.intro}</p>}
+                    </a>
                 ))}
               </div>
             </div>
