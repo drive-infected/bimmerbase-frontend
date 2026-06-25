@@ -10,10 +10,10 @@ export default function Navigation({ lang }) {
   const links = [
     { href: `/${lang}/models`, ru: 'Модели', en: 'Models' },
     { href: `/${lang}/engines`, ru: 'Двигатели', en: 'Engines' },
-    { href: `/${lang}/articles`, ru: 'База знаний', en: 'Knowledge Base' },
     { href: `/${lang}/special-versions`, ru: 'Спецверсии', en: 'Special Versions' },
     { href: `/${lang}/options`, ru: 'Опции', en: 'Options' },
     { href: `/${lang}/trim-groups`, ru: 'Подборки', en: 'Collections' },
+    { href: `/${lang}/articles`, ru: 'Статьи', en: 'Articles' },
   ];
 
   const isActive = (href) => {
