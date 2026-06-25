@@ -24,7 +24,7 @@ export default function Navigation({ lang }) {
   const linkClass = (href) =>
     `block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
       isActive(href)
-        ? 'bg-blue-600 text-white shadow-sm'
+        ? 'bg-[#0066B1] text-white shadow-sm'
         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
     }`;
 
