@@ -1,3 +1,4 @@
+// app/[lang]/models/[series]/[generation]/page.js
 import Tabs from './tabs';
 import RelatedLinks from '@/components/RelatedLinks';
 import { getGenerationSections } from '@/lib/relatedLinks';
@@ -5,19 +6,41 @@ import { getGenerationSections } from '@/lib/relatedLinks';
 export default async function GenerationPage({ params }) {
   const { series, generation, lang } = await params;
 
-  // Один запрос с глубокой популяцией ВСЕХ нужных связей
-  const populateQuery = [
-    'series',                         // родительская серия
-    'modifications.engines',          // модификации + их двигатели
-    'engines.engine_family',          // двигатели + их семейства (для перелинковки)
-    'special_versions.engine',        // спецверсии + их двигатель
-    'articles',                       // статьи (заголовок, intro)
-  ].map(p => `populate[${p}]=true`).join('&');
+  // Базовый URL
+  const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/generations`;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[slug][$eq]=${generation}&${populateQuery}`,
-    { cache: 'no-store' }
-  );
+  // Собираем параметры через URLSearchParams для корректного кодирования
+  const searchParams = new URLSearchParams();
+  searchParams.set('locale', lang);
+  searchParams.set('filters[slug][$eq]', generation);
+
+  // Глубокая популяция (точки в именах допустимы)
+  searchParams.set('populate[series]', 'true');
+  searchParams.set('populate[modifications][populate][engines]', 'true');
+  searchParams.set('populate[engines][populate][engine_family]', 'true');
+  searchParams.set('populate[special_versions][populate][engine]', 'true');
+  searchParams.set('populate[articles]', 'true');
+
+  const apiUrl = `${baseUrl}?${searchParams.toString()}`;
+
+  const res = await fetch(apiUrl, { cache: 'no-store' });
+
+  if (!res.ok) {
+    // В случае ошибки покажем сообщение
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-red-600">
+          {lang === 'ru' ? 'Ошибка загрузки данных' : 'Data loading error'}
+        </h1>
+        <p className="mt-2 text-gray-700">
+          {lang === 'ru'
+            ? `Не удалось загрузить поколение. Код ответа: ${res.status}`
+            : `Failed to load generation. Status: ${res.status}`}
+        </p>
+      </div>
+    );
+  }
+
   const data = await res.json();
   const gen = data.data?.[0];
 
@@ -37,12 +60,8 @@ export default async function GenerationPage({ params }) {
   const startYear = gen.production_start?.substring(0, 4) || '...';
   const endYear = gen.production_end?.substring(0, 4) || '...';
   const parentSeries = gen.series;
-
-  // Формируем секции перелинковки
   const relatedSections = getGenerationSections(gen, lang);
 
-  // Модификации и спецверсии уже лежат в gen благодаря populate,
-  // поэтому можем передать их прямо в Tabs без отдельных запросов.
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       {/* Хлебные крошки */}
@@ -67,16 +86,14 @@ export default async function GenerationPage({ params }) {
         {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
       </p>
 
-      {/* Вкладки с информацией */}
       <Tabs
         lang={lang}
         gen={gen}
         modifications={gen.modifications || []}
         specialVersions={gen.special_versions || []}
-        modelCodes={[]} // если нужны коды моделей, их всё равно придётся подгружать отдельно или добавить в populate
+        modelCodes={[]}
       />
 
-      {/* НОВЫЙ БЛОК ПЕРЕЛИНКОВКИ */}
       <RelatedLinks sections={relatedSections} lang={lang} />
     </div>
   );

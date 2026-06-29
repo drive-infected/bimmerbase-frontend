@@ -13,25 +13,27 @@ export default function RelatedLinks({ sections, lang }) {
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map((item) => (
-                <div key={item.id} className="card">
-                  {item.href ? (
-                    <a href={item.href} className="card-link block">
-                      <span className="card-title">{item.label}</span>
-                      {item.subtitle && (
-                        <p className="card-text mt-1">{item.subtitle}</p>
-                      )}
-                    </a>
-                  ) : (
-                    <>
-                      <span className="card-title">{item.label}</span>
-                      {item.subtitle && (
-                        <p className="card-text mt-1">{item.subtitle}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
+              {section.items.map((item) =>
+                item.href ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    className="card-link"
+                  >
+                    <span className="card-title">{item.label}</span>
+                    {item.subtitle && (
+                      <p className="card-text mt-1">{item.subtitle}</p>
+                    )}
+                  </a>
+                ) : (
+                  <div key={item.id} className="card">
+                    <span className="card-title">{item.label}</span>
+                    {item.subtitle && (
+                      <p className="card-text mt-1">{item.subtitle}</p>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>
