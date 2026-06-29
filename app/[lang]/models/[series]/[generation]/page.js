@@ -1,11 +1,21 @@
 import Tabs from './tabs';
+import RelatedLinks from '@/components/RelatedLinks';
+import { getGenerationSections } from '@/lib/relatedLinks';
 
 export default async function GenerationPage({ params }) {
   const { series, generation, lang } = await params;
 
-  // Поколение
+  // Один запрос с глубокой популяцией ВСЕХ нужных связей
+  const populateQuery = [
+    'series',                         // родительская серия
+    'modifications.engines',          // модификации + их двигатели
+    'engines.engine_family',          // двигатели + их семейства (для перелинковки)
+    'special_versions.engine',        // спецверсии + их двигатель
+    'articles',                       // статьи (заголовок, intro)
+  ].map(p => `populate[${p}]=true`).join('&');
+
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[slug][$eq]=${generation}&populate=*`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/generations?locale=${lang}&filters[slug][$eq]=${generation}&${populateQuery}`,
     { cache: 'no-store' }
   );
   const data = await res.json();
@@ -24,56 +34,18 @@ export default async function GenerationPage({ params }) {
     );
   }
 
-  // Модификации
-  let modifications = [];
-  try {
-    const modRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[generation][documentId][$eq]=${gen.documentId}&populate=engines`,
-      { cache: 'no-store' }
-    );
-    const modData = await modRes.json();
-    modifications = (modData.data || []).sort((a, b) => {
-      if (a.lci !== b.lci) return a.lci === 'LCI' ? 1 : -1;
-      return (a.title || '').localeCompare(b.title || '');
-    });
-  } catch (e) {}
-
-  // Спецверсии
-  let specialVersions = [];
-  try {
-    const svRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?locale=${lang}&filters[generation][documentId][$eq]=${gen.documentId}&populate=engine`,
-      { cache: 'no-store' }
-    );
-    const svData = await svRes.json();
-    specialVersions = svData.data || [];
-  } catch (e) {}
-
-  // Коды моделей
-  let modelCodes = [];
-  try {
-    let page = 1;
-    let allCodes = [];
-    while (true) {
-      const codesRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*&pagination[pageSize]=100&pagination[page]=${page}`,
-        { cache: 'no-store' }
-      );
-      const codesData = await codesRes.json();
-      const pageData = codesData.data || [];
-      allCodes = allCodes.concat(pageData);
-      if (pageData.length < 100) break;
-      page++;
-    }
-    modelCodes = allCodes.sort((a, b) => (a.id || 0) - (b.id || 0));
-  } catch (e) {}
-
-  const startYear = gen.production_start ? String(gen.production_start).substring(0, 4) : '...';
-  const endYear = gen.production_end ? String(gen.production_end).substring(0, 4) : '...';
+  const startYear = gen.production_start?.substring(0, 4) || '...';
+  const endYear = gen.production_end?.substring(0, 4) || '...';
   const parentSeries = gen.series;
 
+  // Формируем секции перелинковки
+  const relatedSections = getGenerationSections(gen, lang);
+
+  // Модификации и спецверсии уже лежат в gen благодаря populate,
+  // поэтому можем передать их прямо в Tabs без отдельных запросов.
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      {/* Хлебные крошки */}
       <nav className="text-sm text-gray-500 mb-4">
         <a href={`/${lang}/models`} className="text-blue-700 no-underline hover:underline">
           {lang === 'ru' ? 'Модельный ряд' : 'Model Range'}
@@ -95,13 +67,17 @@ export default async function GenerationPage({ params }) {
         {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
       </p>
 
+      {/* Вкладки с информацией */}
       <Tabs
         lang={lang}
         gen={gen}
-        modifications={modifications}
-        specialVersions={specialVersions}
-        modelCodes={modelCodes}
+        modifications={gen.modifications || []}
+        specialVersions={gen.special_versions || []}
+        modelCodes={[]} // если нужны коды моделей, их всё равно придётся подгружать отдельно или добавить в populate
       />
+
+      {/* НОВЫЙ БЛОК ПЕРЕЛИНКОВКИ */}
+      <RelatedLinks sections={relatedSections} lang={lang} />
     </div>
   );
 }

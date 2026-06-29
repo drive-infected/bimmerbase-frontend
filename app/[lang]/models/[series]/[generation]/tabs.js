@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';  // useEffect больше не нужен
 
 function formatDate(dateString) {
   if (!dateString) return '...';
@@ -63,29 +63,9 @@ function translateFuelType(type, lang) {
 
 export default function Tabs({ lang, gen, modifications, specialVersions, modelCodes }) {
   const [activeTab, setActiveTab] = useState('main');
-  const [enginesWithFamily, setEnginesWithFamily] = useState([]);
 
-  useEffect(() => {
-    if (gen?.engines?.length) {
-      const fetchEngines = async () => {
-        const results = await Promise.all(
-          gen.engines.map(async (engine) => {
-            try {
-              const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/engines?filters[documentId][$eq]=${engine.documentId}&populate=engine_family`
-              );
-              const d = await res.json();
-              return d.data?.[0] || engine;
-            } catch {
-              return engine;
-            }
-          })
-        );
-        setEnginesWithFamily(results);
-      };
-      fetchEngines();
-    }
-  }, [gen]);
+  // Двигатели теперь приходят уже с engine_family, просто берём gen.engines
+  const enginesWithFamily = gen?.engines || [];
 
   // Уникальные семейства из двигателей
   const familyMap = {};
@@ -119,7 +99,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
 
   return (
     <div className="mt-8">
-      {/* Табы с горизонтальной прокруткой и фиксированной высотой */}
+      {/* Табы с горизонтальной прокруткой */}
       <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         {tabs.map((tab) => (
           <button
