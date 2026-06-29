@@ -1,19 +1,23 @@
+// app/[lang]/special-versions/[slug]/page.js
+import RelatedLinks from '@/components/RelatedLinks';
+import { getSpecialVersionSections } from '@/lib/relatedLinks';
+
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
-  return blocks.map((block) => {
+  return blocks.map(block => {
     if (block.type === 'paragraph') {
-      const text = block.children?.map((c) => c.text || '').join('');
+      const text = block.children?.map(c => c.text || '').join('');
       return text ? `<p>${text}</p>` : '';
     }
     if (block.type === 'heading') {
-      const text = block.children?.map((c) => c.text).join('');
+      const text = block.children?.map(c => c.text).join('');
       return `<h${block.level || 2}>${text}</h${block.level || 2}>`;
     }
     if (block.type === 'list') {
       const tag = block.format === 'ordered' ? 'ol' : 'ul';
-      const items = (block.children || []).map((item) => {
+      const items = (block.children || []).map(item => {
         if (item.type === 'list-item') {
-          const text = item.children?.map((c) => c.text || '').join('');
+          const text = item.children?.map(c => c.text || '').join('');
           return `<li>${text}</li>`;
         }
         return '';
@@ -27,10 +31,26 @@ function renderRichText(blocks) {
 export default async function SpecialVersionPage({ params }) {
   const { slug, lang } = await params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?locale=${lang}&filters[slug][$eq]=${slug}&populate=*`,
-    { cache: 'no-store' }
-  );
+  // Глубокая популяция
+  const searchParams = new URLSearchParams();
+  searchParams.set('locale', lang);
+  searchParams.set('filters[slug][$eq]', slug);
+  searchParams.set('populate[generation][populate][series]', 'true');
+  searchParams.set('populate[engine][populate][engine_family]', 'true');
+  searchParams.set('populate[articles]', 'true');
+  searchParams.set('populate[base_options]', 'true');
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?${searchParams.toString()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-red-600">
+          {lang === 'ru' ? 'Ошибка загрузки' : 'Loading error'}
+        </h1>
+      </div>
+    );
+  }
   const data = await res.json();
   const sv = data.data?.[0];
 
@@ -44,6 +64,8 @@ export default async function SpecialVersionPage({ params }) {
       </div>
     );
   }
+
+  const relatedSections = getSpecialVersionSections(sv, lang);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -62,12 +84,6 @@ export default async function SpecialVersionPage({ params }) {
         {sv.power_hp && <span>{sv.power_hp} hp</span>}
       </div>
 
-      {sv.series && (
-        <div className="mt-3">
-          <a href={`/${lang}/series/${sv.series.slug}`} className="text-blue-700 no-underline">{sv.series.title}</a>
-        </div>
-      )}
-
       {sv.description && (
         <div className="mt-8 rich-text">
           <h2 className="section-title">{lang === 'ru' ? 'Описание' : 'Description'}</h2>
@@ -82,15 +98,6 @@ export default async function SpecialVersionPage({ params }) {
         </div>
       )}
 
-      {sv.engine && (
-        <div className="mt-8">
-          <h2 className="section-title">{lang === 'ru' ? 'Двигатель' : 'Engine'}</h2>
-          <a href={sv.engine.engine_family?.slug ? `/${lang}/engines/${sv.engine.engine_family.slug}/${sv.engine.slug}` : '#'} className="card-link !p-4 inline-block text-blue-700">
-            {sv.engine.index} — {sv.engine.power_hp} hp
-          </a>
-        </div>
-      )}
-
       {sv.base_options && sv.base_options.length > 0 && (
         <div className="mt-8">
           <h2 className="section-title">{lang === 'ru' ? 'Стандартное оснащение' : 'Standard Equipment'}</h2>
@@ -102,18 +109,8 @@ export default async function SpecialVersionPage({ params }) {
         </div>
       )}
 
-      {sv.articles && sv.articles.length > 0 && (
-        <div className="mt-8">
-          <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
-          <div className="flex flex-col gap-3">
-            {sv.articles.map((article) => (
-              <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link !p-4">
-                <strong>{article.title}</strong>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Перелинковка */}
+      <RelatedLinks sections={relatedSections} lang={lang} />
     </div>
   );
 }
