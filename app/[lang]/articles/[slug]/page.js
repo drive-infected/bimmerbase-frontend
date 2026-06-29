@@ -63,6 +63,23 @@ function translateDifficulty(difficulty, lang) {
   return difficulty;
 }
 
+const categoryTranslations = {
+  ru: {
+    'Diagnostics & Repair': 'Диагностика и ремонт',
+    'History': 'История',
+    'Maintenance': 'Обслуживание',
+    'Motorsport': 'Автоспорт',
+    'Retrofit': 'Доработка',
+  },
+};
+
+function translateCategory(title, lang) {
+  if (lang === 'ru' && categoryTranslations.ru[title]) {
+    return categoryTranslations.ru[title];
+  }
+  return title;
+}
+
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
 
@@ -109,6 +126,9 @@ export default async function ArticlePage({ params }) {
 
   const contentHtml = renderRichText(article.content);
   const relatedSections = getArticleSections(article, lang);
+  const categoryName = article.category?.title
+    ? translateCategory(article.category.title, lang)
+    : null;
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-10">
@@ -116,10 +136,10 @@ export default async function ArticlePage({ params }) {
         <a href={`/${lang}/articles`} className="text-blue-700 no-underline hover:underline">
           {lang === 'ru' ? 'База знаний' : 'Knowledge Base'}
         </a>
-        {article.category && (
+        {categoryName && (
           <>
             <span className="mx-2">/</span>
-            <span>{article.category.title}</span>
+            <span>{categoryName}</span>
           </>
         )}
       </nav>
