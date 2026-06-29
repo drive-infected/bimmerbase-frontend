@@ -132,20 +132,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
               <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
             </div>
           )}
-
-          {gen.articles?.length > 0 && (
-            <div className="mt-10">
-              <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
-              <div className="flex flex-col gap-3">
-                {gen.articles.map((article) => (
-                  <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
-                    <span className="card-title">{article.title}</span>
-                    {article.intro && <p className="card-text mt-1">{article.intro}</p>}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
 
