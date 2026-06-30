@@ -10,17 +10,18 @@ export default function CarPage({ params }) {
 
   useEffect(() => {
     const jwt = localStorage.getItem('jwt');
-    if (!jwt) {
+    const userData = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!jwt || !userData) {
       window.location.href = `/${lang}/auth`;
       return;
     }
-    fetchCar(jwt);
+    fetchCar(jwt, userData.id);
   }, []);
 
-  const fetchCar = async (jwt) => {
+  const fetchCar = async (jwt, userId) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?filters[documentId][$eq]=${id}&populate=*`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?filters[documentId][$eq]=${id}&filters[users_permissions_user][id][$eq]=${userId}&populate=*`,
         { headers: { Authorization: `Bearer ${jwt}` } }
       );
       const data = await res.json();

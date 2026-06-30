@@ -29,10 +29,10 @@ export default function EditCarPage({ params }) {
     fetchCar(jwt);
   }, []);
 
-  const fetchCar = async (jwt) => {
+  const fetchCar = async (jwt, userId) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?filters[documentId][$eq]=${id}&populate=*`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?filters[documentId][$eq]=${id}&filters[users_permissions_user][id][$eq]=${userId}&populate=*`,
         { headers: { Authorization: `Bearer ${jwt}` } }
       );
       const data = await res.json();
