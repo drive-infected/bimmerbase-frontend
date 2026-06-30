@@ -1,6 +1,7 @@
+// app/[lang]/models/[series]/[generation]/tabs.js
 'use client';
 
-import { useState } from 'react';  // useEffect больше не нужен
+import { useState } from 'react';
 
 function formatDate(dateString) {
   if (!dateString) return '...';
@@ -12,7 +13,7 @@ function formatDate(dateString) {
 
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
-  const html = blocks.map((block) => {
+  return blocks.map((block) => {
     if (block.type === 'paragraph') {
       const text = block.children?.map((c) => {
         let content = c.text || '';
@@ -34,7 +35,6 @@ function renderRichText(blocks) {
     }
     return '';
   }).join('');
-  return html;
 }
 
 function renderListItems(children) {
@@ -46,8 +46,7 @@ function renderListItems(children) {
     }
     if (child.type === 'list') {
       const tag = child.format === 'ordered' ? 'ol' : 'ul';
-      const items = renderListItems(child.children);
-      return `<${tag}>${items}</${tag}>`;
+      return `<${tag}>${renderListItems(child.children)}</${tag}>`;
     }
     return '';
   }).join('');
@@ -64,10 +63,8 @@ function translateFuelType(type, lang) {
 export default function Tabs({ lang, gen, modifications, specialVersions, modelCodes }) {
   const [activeTab, setActiveTab] = useState('main');
 
-  // Двигатели теперь приходят уже с engine_family, просто берём gen.engines
   const enginesWithFamily = gen?.engines || [];
 
-  // Уникальные семейства из двигателей
   const familyMap = {};
   enginesWithFamily.forEach((engine) => {
     const fam = engine.engine_family;
@@ -77,14 +74,12 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
   });
   const families = Object.values(familyMap).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
 
-  // Группировка семейств по типу топлива и конфигурации
   const groupedFamilies = {};
   families.forEach((family) => {
     const fuel = family.fuel_type;
     const config = family.engine_type === 'Inline'
       ? (lang === 'ru' ? 'Рядный' : 'Inline') + ' ' + family.cylinders
       : family.engine_type + family.cylinders;
-
     if (!groupedFamilies[fuel]) groupedFamilies[fuel] = {};
     if (!groupedFamilies[fuel][config]) groupedFamilies[fuel][config] = [];
     groupedFamilies[fuel][config].push(family);
@@ -94,12 +89,13 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
     { key: 'main', ru: 'Главное', en: 'Main' },
     { key: 'engines', ru: 'Двигатели', en: 'Engines' },
     { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
-    { key: 'codes', ru: 'Коды моделей', en: 'Model Codes' },
+    ...(modelCodes.length > 0
+      ? [{ key: 'codes', ru: 'Коды моделей', en: 'Model Codes' }]
+      : []),
   ];
 
   return (
     <div className="mt-8">
-      {/* Табы с горизонтальной прокруткой */}
       <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         {tabs.map((tab) => (
           <button
@@ -116,7 +112,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         ))}
       </div>
 
-      {/* Вкладка: Главное */}
       {activeTab === 'main' && (
         <>
           {gen.description && (
@@ -125,7 +120,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
               <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.description) }} />
             </div>
           )}
-
           {gen.lci_info && (
             <div className="mt-10 rich-text">
               <h2 className="section-title">LCI</h2>
@@ -135,11 +129,12 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </>
       )}
 
-      {/* Вкладка: Двигатели */}
       {activeTab === 'engines' && (
         <div className="space-y-8">
           {Object.keys(groupedFamilies).length === 0 && (
-            <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}</p>
+            <p className="text-gray-400 text-sm">
+              {lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}
+            </p>
           )}
           {Object.entries(groupedFamilies)
             .sort(([a], [b]) => {
@@ -150,7 +145,9 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
             .map(([fuel, configs]) => (
               <div key={fuel}>
                 <h2 className="section-title mb-4">
-                  {fuel === 'Petrol' ? (lang === 'ru' ? 'Бензиновые' : 'Petrol') : (lang === 'ru' ? 'Дизельные' : 'Diesel')}
+                  {fuel === 'Petrol'
+                    ? lang === 'ru' ? 'Бензиновые' : 'Petrol'
+                    : lang === 'ru' ? 'Дизельные' : 'Diesel'}
                 </h2>
                 {Object.entries(configs).map(([config, familiesInConfig]) => (
                   <div key={config} className="mb-6">
@@ -180,7 +177,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </div>
       )}
 
-      {/* Вкладка: Модификации */}
       {activeTab === 'modifications' && (
         <div className="space-y-10">
           {modifications.length > 0 && (
@@ -235,7 +231,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </div>
       )}
 
-      {/* Вкладка: Коды моделей */}
       {activeTab === 'codes' && (
         modelCodes.length > 0 ? (
           <div className="overflow-x-auto">
@@ -302,9 +297,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
               </tbody>
             </table>
           </div>
-        ) : (
-          <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Коды моделей будут добавлены.' : 'Model codes will be added.'}</p>
-        )
+        ) : null
       )}
     </div>
   );
