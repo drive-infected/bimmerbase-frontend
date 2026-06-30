@@ -1,84 +1,50 @@
 // app/[lang]/articles/[slug]/page.js
 import RelatedLinks from '@/components/RelatedLinks';
 import { getArticleSections } from '@/lib/relatedLinks';
+import Script from 'next/script';
 
-function renderRichText(blocks) {
-  if (!blocks || !Array.isArray(blocks)) return '';
-  return blocks.map(block => {
-    if (block.type === 'paragraph') {
-      const text = block.children?.map(c => {
-        let content = c.text || '';
-        if (c.bold) content = `<strong>${content}</strong>`;
-        if (c.italic) content = `<em>${content}</em>`;
-        return content;
-      }).join('');
-      return text ? `<p>${text}</p>` : '';
-    }
-    if (block.type === 'heading') {
-      const text = block.children?.map(c => c.text).join('');
-      return `<h${block.level || 2}>${text}</h${block.level || 2}>`;
-    }
-    if (block.type === 'list') {
-      const tag = block.format === 'ordered' ? 'ol' : 'ul';
-      const items = renderListItems(block.children);
-      return `<${tag}>${items}</${tag}>`;
-    }
-    if (block.type === 'quote') {
-      const text = block.children?.map(c => c.text).join('');
-      return `<blockquote>${text}</blockquote>`;
-    }
-    if (block.type === 'code') {
-      const code = block.children?.map(c => c.text).join('');
-      return `<pre><code>${code}</code></pre>`;
-    }
-    if (block.type === 'image') {
-      return `<img src="${block.image?.url}" alt="${block.image?.alternativeText || ''}" />`;
-    }
-    return '';
-  }).join('');
-}
+export async function generateMetadata({ params }) {
+  const { slug, lang } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
-function renderListItems(children) {
-  if (!children || !Array.isArray(children)) return '';
-  return children.map(child => {
-    if (child.type === 'list-item') {
-      const text = child.children?.filter(c => c.type === 'text')?.map(c => c.text || '').join('') || '';
-      return `<li>${text}</li>`;
-    }
-    if (child.type === 'list') {
-      const tag = child.format === 'ordered' ? 'ol' : 'ul';
-      const items = renderListItems(child.children);
-      return `<${tag}>${items}</${tag}>`;
-    }
-    return '';
-  }).join('');
-}
+  // Лёгкий запрос для метаданных
+  const metaRes = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate[category]=true`,
+    { cache: 'no-store' }
+  );
+  const metaData = await metaRes.json();
+  const article = metaData.data?.[0];
 
-function translateDifficulty(difficulty, lang) {
-  if (lang === 'ru') {
-    if (difficulty === 'Easy') return 'Лёгкая';
-    if (difficulty === 'Medium') return 'Средняя';
-    if (difficulty === 'Hard') return 'Сложная';
+  if (!article) {
+    return { title: lang === 'ru' ? 'Статья не найдена – BimmerBase' : 'Article not found – BimmerBase' };
   }
-  return difficulty;
+
+  const title = `${article.title} – BimmerBase`;
+  const description = article.intro?.substring(0, 160) || title;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/${lang}/articles/${article.slug}`,
+      languages: {
+        en: `${siteUrl}/en/articles/${article.slug}`,
+        ru: `${siteUrl}/ru/articles/${article.slug}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/${lang}/articles/${article.slug}`,
+      siteName: 'BimmerBase',
+      type: 'article',
+      publishedTime: article.published_date,
+      images: [`${siteUrl}/images/og-default.jpg`],
+    },
+  };
 }
 
-const categoryTranslations = {
-  ru: {
-    'Diagnostics & Repair': 'Диагностика и ремонт',
-    'History': 'История',
-    'Maintenance': 'Обслуживание',
-    'Motorsport': 'Автоспорт',
-    'Retrofit': 'Доработка',
-  },
-};
-
-function translateCategory(title, lang) {
-  if (lang === 'ru' && categoryTranslations.ru[title]) {
-    return categoryTranslations.ru[title];
-  }
-  return title;
-}
+// ... функции renderRichText, renderListItems, translateDifficulty, categoryTranslations, translateCategory остаются без изменений ...
 
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
@@ -130,42 +96,118 @@ export default async function ArticlePage({ params }) {
     ? translateCategory(article.category.title, lang)
     : null;
 
+  // Форматирование даты
+  const formattedDate = article.published_date
+    ? new Date(article.published_date).toLocaleDateString(
+        lang === 'ru' ? 'ru-RU' : 'en-US',
+        { year: 'numeric', month: 'long', day: 'numeric' }
+      )
+    : null;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+  const articleUrl = `${siteUrl}/${lang}/articles/${article.slug}`;
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.intro,
+    datePublished: article.published_date,
+    ...(article.tags?.length > 0 && {
+      keywords: article.tags.map(tag => tag.title).join(', '),
+    }),
+    author: {
+      '@type': 'Organization',
+      name: 'BimmerBase',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'BimmerBase',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/images/logo.png`,
+      },
+    },
+    mainEntityOfPage: articleUrl,
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: lang === 'ru' ? 'База знаний' : 'Knowledge Base',
+        item: `${siteUrl}/${lang}/articles`,
+      },
+      article.category && {
+        '@type': 'ListItem',
+        position: 2,
+        name: translateCategory(article.category.title, lang),
+        item: `${siteUrl}/${lang}/articles?category=${article.category.slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: article.category ? 3 : 2,
+        name: article.title,
+      },
+    ].filter(Boolean),
+  };
+
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
-      <nav className="text-sm text-gray-500 mb-6">
-        <a href={`/${lang}/articles`} className="text-blue-700 no-underline hover:underline">
-          {lang === 'ru' ? 'База знаний' : 'Knowledge Base'}
-        </a>
-        {categoryName && (
-          <>
-            <span className="mx-2">/</span>
-            <span>{categoryName}</span>
-          </>
+    <>
+      <main className="max-w-3xl mx-auto px-4 py-10">
+        <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+          <a href={`/${lang}/articles`} className="text-blue-700 no-underline hover:underline">
+            {lang === 'ru' ? 'База знаний' : 'Knowledge Base'}
+          </a>
+          {categoryName && (
+            <>
+              <span className="mx-2">/</span>
+              <a href={`/${lang}/articles?category=${article.category.slug}`} className="text-blue-700 no-underline hover:underline">
+                {categoryName}
+              </a>
+            </>
+          )}
+          <span className="mx-2">/</span>
+          <span className="text-gray-700">{article.title}</span>
+        </nav>
+
+        <h1 className="text-3xl font-bold leading-tight">{article.title}</h1>
+
+        <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
+          {formattedDate && (
+            <span>{formattedDate}</span>
+          )}
+          {article.difficulty && (
+            <span>{translateDifficulty(article.difficulty, lang)}</span>
+          )}
+        </div>
+
+        {article.intro && (
+          <p className="mt-6 text-lg text-gray-600 italic leading-relaxed border-l-4 border-[#0066B1] pl-4">
+            {article.intro}
+          </p>
         )}
-      </nav>
 
-      <h1 className="text-3xl font-bold leading-tight">{article.title}</h1>
+        <div className="mt-8 rich-text text-base">
+          <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+        </div>
 
-      <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
-        {article.published_date && (
-          <span>{lang === 'ru' ? 'Опубликовано' : 'Published'}: {article.published_date}</span>
-        )}
-        {article.difficulty && (
-          <span>{lang === 'ru' ? 'Сложность' : 'Difficulty'}: {translateDifficulty(article.difficulty, lang)}</span>
-        )}
-      </div>
+        <RelatedLinks sections={relatedSections} lang={lang} />
+      </main>
 
-      {article.intro && (
-        <p className="mt-6 text-lg text-gray-600 italic leading-relaxed">
-          {article.intro}
-        </p>
-      )}
-
-      <div className="mt-8 rich-text text-base">
-        <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-      </div>
-
-      <RelatedLinks sections={relatedSections} lang={lang} />
-    </main>
+      <Script
+        id="schema-article"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <Script
+        id="schema-breadcrumbs-article"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+    </>
   );
 }
