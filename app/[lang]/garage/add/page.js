@@ -67,6 +67,7 @@ export default function AddCarPage({ params }) {
     setMessage('');
 
     const jwt = localStorage.getItem('jwt');
+    if (!user) return;
 
     const body = {
       data: {
@@ -76,6 +77,12 @@ export default function AddCarPage({ params }) {
         car_status: carStatus,
         visibility,
         notes: notes || null,
+        // Связь с текущим пользователем
+        users_permissions_user: user.id,
+        // Связи с выбранной моделью (если выбраны)
+        ...(seriesId && { series: seriesId }),
+        ...(generationId && { generation: generationId }),
+        ...(modificationId && { modification: modificationId }),
       },
     };
 

@@ -22,10 +22,11 @@ export default function GaragePage({ params }) {
 
   const fetchCars = async (jwt, userData) => {
     try {
+      // Фильтруем только машины текущего пользователя
       const res = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?populate=*`,
-  { headers: { Authorization: `Bearer ${jwt}` } }
-);
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user-cars?populate=*&filters[users_permissions_user][id][$eq]=${userData.id}`,
+        { headers: { Authorization: `Bearer ${jwt}` } }
+      );
       const data = await res.json();
       setCars(data.data || []);
     } catch (err) {
