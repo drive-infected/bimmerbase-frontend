@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
   const metaRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engine}&populate=engine_family&populate[generations][fields]=title`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engine}&populate=engine_family`,
     { cache: 'no-store' }
   );
   const metaData = await metaRes.json();
