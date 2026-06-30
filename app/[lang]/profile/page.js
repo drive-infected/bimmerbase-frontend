@@ -112,7 +112,7 @@ export default function ProfilePage({ params }) {
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="card flex flex-col items-center justify-center py-6">
-          <span className="text-3xl font-bold text-blue-700">{carsCount}</span>
+          <span className="text-3xl font-bold text-[#0066B1]">{carsCount}</span>
           <span className="text-sm text-gray-500 mt-2 text-center">
             {lang === 'ru'
               ? decline(carsCount, 'автомобиль', 'автомобиля', 'автомобилей')
@@ -120,7 +120,7 @@ export default function ProfilePage({ params }) {
           </span>
         </div>
         <div className="card flex flex-col items-center justify-center py-6">
-          <span className="text-3xl font-bold text-blue-700">
+          <span className="text-3xl font-bold text-[#0066B1]">
             {user?.createdAt
               ? Math.floor((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24))
               : '—'}
