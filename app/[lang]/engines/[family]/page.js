@@ -1,5 +1,45 @@
 // app/[lang]/engines/[family]/page.js
 import RelatedLinks from '@/components/RelatedLinks';
+import Script from 'next/script';
+
+export async function generateMetadata({ params }) {
+  const { family, lang } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+
+  const metaRes = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?locale=${lang}&filters[slug][$eq]=${family}&populate[engines]=true`,
+    { cache: 'no-store' }
+  );
+  const metaData = await metaRes.json();
+  const fam = metaData.data?.[0];
+
+  if (!fam) {
+    return { title: lang === 'ru' ? 'Семейство не найдено – BimmerBase' : 'Family not found – BimmerBase' };
+  }
+
+  const title = `${fam.code} – ${lang === 'ru' ? 'семейство двигателей' : 'engine family'} – BimmerBase`;
+  const description = `${fam.code} – ${fam.cylinders}-цилиндровый ${fam.fuel_type === 'Petrol' ? 'бензиновый' : 'дизельный'} двигатель (${fam.production_start?.substring(0,4)}–${fam.production_end?.substring(0,4)}). ${fam.engines?.length || 0} модификаций.`.substring(0, 160);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/${lang}/engines/${fam.slug}`,
+      languages: {
+        en: `${siteUrl}/en/engines/${fam.slug}`,
+        ru: `${siteUrl}/ru/engines/${fam.slug}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/${lang}/engines/${fam.slug}`,
+      siteName: 'BimmerBase',
+      type: 'website',
+      images: [`${siteUrl}/images/og-default.jpg`],
+    },
+  };
+}
 
 export default async function EngineFamilyPage({ params }) {
   const { family, lang } = await params;
@@ -31,7 +71,7 @@ export default async function EngineFamilyPage({ params }) {
     );
   }
 
-  // 2. Поколения, где используется семейство (как раньше)
+  // 2. Поколения, где используется семейство
   const genSearchParams = new URLSearchParams();
   genSearchParams.set('locale', lang);
   genSearchParams.set('filters[engines][engine_family][slug][$eq]', family);
@@ -58,7 +98,6 @@ export default async function EngineFamilyPage({ params }) {
   // 3. Секции для RelatedLinks
   const sections = [];
 
-  // -- Двигатели семейства
   if (engines.length > 0) {
     sections.push({
       key: 'engines',
@@ -72,11 +111,8 @@ export default async function EngineFamilyPage({ params }) {
     });
   }
 
-  // -- Поколения (применяемость)
   if (generations.length > 0) {
-    const sorted = [...generations].sort((a, b) =>
-      (a.title || '').localeCompare(b.title || '')
-    );
+    const sorted = [...generations].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
     sections.push({
       key: 'generations',
       title: lang === 'ru' ? 'Применяемость' : 'Applications',
@@ -89,7 +125,6 @@ export default async function EngineFamilyPage({ params }) {
     });
   }
 
-  // -- Статьи (если есть прямые статьи семейства)
   const articles = (fam.articles || []).filter((a) => a.locale === lang);
   if (articles.length > 0) {
     sections.push({
@@ -104,43 +139,71 @@ export default async function EngineFamilyPage({ params }) {
     });
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <a href={`/${lang}/engines`} className="text-blue-700 no-underline">
-        ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
-      </a>
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: lang === 'ru' ? 'Двигатели' : 'Engines',
+        item: `${siteUrl}/${lang}/engines`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: fam.code,
+      },
+    ],
+  };
 
-      <h1 className="text-4xl font-bold mt-4">{fam.code}</h1>
-      <div className="flex flex-wrap gap-2 mt-3 text-sm text-gray-500">
-        <span>{fam.production_start?.substring(0, 4)}–{fam.production_end?.substring(0, 4)}</span>
-        <span>•</span>
-        <span>{fam.cylinders} cyl</span>
-        <span>•</span>
-        <span>
-          {fam.layout === 'Longitudinal'
-            ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
-            : lang === 'ru' ? 'Поперечное' : 'Transverse'}
-        </span>
-        <span>•</span>
-        <span>{fam.head_material} / {fam.block_material}</span>
+  return (
+    <>
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <a href={`/${lang}/engines`} className="text-blue-700 no-underline">
+          ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
+        </a>
+
+        <h1 className="text-4xl font-bold mt-4">
+          <span className="text-[#0066B1]">{fam.code}</span>
+        </h1>
+        <div className="flex flex-wrap gap-2 mt-3 text-sm text-gray-500">
+          <span>{fam.production_start?.substring(0, 4)}–{fam.production_end?.substring(0, 4)}</span>
+          <span>•</span>
+          <span>{fam.cylinders} cyl</span>
+          <span>•</span>
+          <span>
+            {fam.layout === 'Longitudinal'
+              ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
+              : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+          </span>
+          <span>•</span>
+          <span>{fam.head_material} / {fam.block_material}</span>
+        </div>
+
+        {fam.description && (
+          <div className="mt-6 rich-text">
+            <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
+          </div>
+        )}
+
+        {fam.features && (
+          <div className="mt-6 rich-text">
+            <h2 className="section-title">{lang === 'ru' ? 'Особенности' : 'Features'}</h2>
+            <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.features) }} />
+          </div>
+        )}
+
+        <RelatedLinks sections={sections} lang={lang} />
       </div>
 
-      {fam.description && (
-        <div className="mt-6 rich-text">
-          <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
-        </div>
-      )}
-
-      {fam.features && (
-        <div className="mt-6 rich-text">
-          <h2 className="section-title">{lang === 'ru' ? 'Особенности' : 'Features'}</h2>
-          <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.features) }} />
-        </div>
-      )}
-
-      {/* Заменяем старые секции на RelatedLinks */}
-      <RelatedLinks sections={sections} lang={lang} />
-    </div>
+      <Script
+        id="schema-breadcrumbs-family"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+    </>
   );
 }
 

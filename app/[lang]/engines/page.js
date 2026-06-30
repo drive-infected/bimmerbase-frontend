@@ -1,4 +1,33 @@
+// app/[lang]/engines/page.js
 import EngineTabs from './tabs';
+
+export async function generateMetadata({ params }) {
+  const { lang } = await params;
+  const title = lang === 'ru' ? 'Двигатели BMW – BimmerBase' : 'BMW Engines – BimmerBase';
+  const description = lang === 'ru'
+    ? 'Каталог бензиновых и дизельных двигателей BMW с характеристиками, семействами и применяемостью.'
+    : 'Catalog of petrol and diesel BMW engines with specifications, families and applications.';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/engines`,
+      languages: {
+        en: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/en/engines`,
+        ru: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/ru/engines`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/engines`,
+      siteName: 'BimmerBase',
+      type: 'website',
+      images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/images/og-default.jpg`],
+    },
+  };
+}
 
 export default async function EnginesListPage({ params }) {
   const { lang } = await params;

@@ -1,11 +1,50 @@
 // app/[lang]/engines/[family]/[engine]/page.js
 import RelatedLinks from '@/components/RelatedLinks';
 import { getEngineSections } from '@/lib/relatedLinks';
+import Script from 'next/script';
+
+export async function generateMetadata({ params }) {
+  const { engine, family, lang } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+
+  const metaRes = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/engines?locale=${lang}&filters[slug][$eq]=${engine}&populate=engine_family&populate[generations][fields]=title`,
+    { cache: 'no-store' }
+  );
+  const metaData = await metaRes.json();
+  const eng = metaData.data?.[0];
+
+  if (!eng) {
+    return { title: lang === 'ru' ? 'Двигатель не найден – BimmerBase' : 'Engine not found – BimmerBase' };
+  }
+
+  const title = `${lang === 'ru' ? 'Двигатель' : 'Engine'} ${eng.index} – ${eng.engine_family?.code || ''} – BimmerBase`;
+  const description = `${eng.index} (${eng.engine_family?.code || ''}) – ${eng.displacement} cc, ${eng.power_hp} hp, ${eng.torque_nm} Nm. ${lang === 'ru' ? 'Характеристики, обслуживание, применяемость.' : 'Specifications, maintenance, applications.'}`.substring(0, 160);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/${lang}/engines/${eng.engine_family?.slug}/${eng.slug}`,
+      languages: {
+        en: `${siteUrl}/en/engines/${eng.engine_family?.slug}/${eng.slug}`,
+        ru: `${siteUrl}/ru/engines/${eng.engine_family?.slug}/${eng.slug}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/${lang}/engines/${eng.engine_family?.slug}/${eng.slug}`,
+      siteName: 'BimmerBase',
+      type: 'website',
+      images: [`${siteUrl}/images/og-default.jpg`],
+    },
+  };
+}
 
 export default async function EnginePage({ params }) {
   const { engine: engineSlug, family: familySlug, lang } = await params;
 
-  // Один запрос с глубокой популяцией всех нужных связей
   const searchParams = new URLSearchParams();
   searchParams.set('locale', lang);
   searchParams.set('filters[slug][$eq]', engineSlug);
@@ -48,48 +87,93 @@ export default async function EnginePage({ params }) {
 
   const family = engine.engine_family;
   const relatedSections = getEngineSections(engine, lang);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+
+  const engineSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'EngineSpecification',
+    name: engine.index,
+    engineDisplacement: `${engine.displacement} cc`,
+    enginePower: `${engine.power_hp} hp`,
+    torque: `${engine.torque_nm} Nm`,
+    fuelType: engine.fuel_type,
+    manufacturer: { '@type': 'Brand', name: 'BMW' },
+    ...(family && { model: family.code }),
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: lang === 'ru' ? 'Двигатели' : 'Engines',
+        item: `${siteUrl}/${lang}/engines`,
+      },
+      family && {
+        '@type': 'ListItem',
+        position: 2,
+        name: family.code,
+        item: `${siteUrl}/${lang}/engines/${family.slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: family ? 3 : 2,
+        name: engine.index,
+      },
+    ].filter(Boolean),
+  };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      {/* Хлебные крошки */}
-      <nav className="text-sm text-gray-500 mb-4">
-        <a href={`/${lang}/engines`} className="text-blue-700 no-underline hover:underline">
-          {lang === 'ru' ? 'Двигатели' : 'Engines'}
-        </a>
+    <>
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <nav className="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+          <a href={`/${lang}/engines`} className="text-blue-700 no-underline hover:underline">
+            {lang === 'ru' ? 'Двигатели' : 'Engines'}
+          </a>
+          {family && (
+            <>
+              <span className="mx-2">/</span>
+              <a href={`/${lang}/engines/${family.slug}`} className="text-blue-700 no-underline hover:underline">
+                {family.code}
+              </a>
+            </>
+          )}
+          <span className="mx-2">/</span>
+          <span className="text-gray-700">{engine.index}</span>
+        </nav>
+
+        <h1 className="text-4xl font-bold mt-2">
+          {lang === 'ru' ? 'Двигатель' : 'Engine'}{' '}
+          <span className="text-[#0066B1]">{engine.index}</span>
+        </h1>
         {family && (
-          <>
-            <span className="mx-2">/</span>
-            <a href={`/${lang}/engines/${family.slug}`} className="text-blue-700 no-underline hover:underline">
-              {family.code}
-            </a>
-          </>
+          <p className="text-gray-600 mt-2 text-lg">
+            {lang === 'ru' ? 'Семейство' : 'Family'}: {family.code} • {family.cylinders} cyl
+          </p>
         )}
-        <span className="mx-2">/</span>
-        <span className="text-gray-700">{engine.index}</span>
-      </nav>
 
-      <h1 className="text-4xl font-bold mt-2">
-        {lang === 'ru' ? 'Двигатель' : 'Engine'} {engine.index}
-      </h1>
-      {family && (
-        <p className="text-gray-600 mt-2 text-lg">
-          {lang === 'ru' ? 'Семейство' : 'Family'}: {family.code} • {family.cylinders} cyl
-        </p>
-      )}
+        <SpecsSection engine={engine} lang={lang} />
+        <MaintenanceSection engine={engine} lang={lang} />
+        <RelatedLinks sections={relatedSections} lang={lang} />
+      </div>
 
-      {/* Характеристики */}
-      <SpecsSection engine={engine} lang={lang} />
-
-      {/* Обслуживание */}
-      <MaintenanceSection engine={engine} lang={lang} />
-
-      {/* Перелинковка */}
-      <RelatedLinks sections={relatedSections} lang={lang} />
-    </div>
+      <Script
+        id="schema-engine"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(engineSchema) }}
+      />
+      <Script
+        id="schema-breadcrumbs-engine"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+    </>
   );
 }
 
-// --- Вспомогательные компоненты (без изменений, только перемещены ниже) ---
+// --- Вспомогательные компоненты (оставлены без изменений) ---
 
 function SpecsSection({ engine, lang }) {
   return (
