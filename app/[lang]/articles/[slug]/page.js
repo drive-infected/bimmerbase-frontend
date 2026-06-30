@@ -3,11 +3,91 @@ import RelatedLinks from '@/components/RelatedLinks';
 import { getArticleSections } from '@/lib/relatedLinks';
 import Script from 'next/script';
 
+// ---------- Функции рендеринга RichText ----------
+function renderRichText(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  return blocks.map(block => {
+    if (block.type === 'paragraph') {
+      const text = block.children?.map(c => {
+        let content = c.text || '';
+        if (c.bold) content = `<strong>${content}</strong>`;
+        if (c.italic) content = `<em>${content}</em>`;
+        return content;
+      }).join('');
+      return text ? `<p>${text}</p>` : '';
+    }
+    if (block.type === 'heading') {
+      const text = block.children?.map(c => c.text).join('');
+      return `<h${block.level || 2}>${text}</h${block.level || 2}>`;
+    }
+    if (block.type === 'list') {
+      const tag = block.format === 'ordered' ? 'ol' : 'ul';
+      const items = renderListItems(block.children);
+      return `<${tag}>${items}</${tag}>`;
+    }
+    if (block.type === 'quote') {
+      const text = block.children?.map(c => c.text).join('');
+      return `<blockquote>${text}</blockquote>`;
+    }
+    if (block.type === 'code') {
+      const code = block.children?.map(c => c.text).join('');
+      return `<pre><code>${code}</code></pre>`;
+    }
+    if (block.type === 'image') {
+      return `<img src="${block.image?.url}" alt="${block.image?.alternativeText || ''}" />`;
+    }
+    return '';
+  }).join('');
+}
+
+function renderListItems(children) {
+  if (!children || !Array.isArray(children)) return '';
+  return children.map(child => {
+    if (child.type === 'list-item') {
+      const text = child.children?.filter(c => c.type === 'text')?.map(c => c.text || '').join('') || '';
+      return `<li>${text}</li>`;
+    }
+    if (child.type === 'list') {
+      const tag = child.format === 'ordered' ? 'ol' : 'ul';
+      const items = renderListItems(child.children);
+      return `<${tag}>${items}</${tag}>`;
+    }
+    return '';
+  }).join('');
+}
+
+// ---------- Переводы ----------
+function translateDifficulty(difficulty, lang) {
+  if (lang === 'ru') {
+    if (difficulty === 'Easy') return 'Лёгкая';
+    if (difficulty === 'Medium') return 'Средняя';
+    if (difficulty === 'Hard') return 'Сложная';
+  }
+  return difficulty;
+}
+
+const categoryTranslations = {
+  ru: {
+    'Diagnostics & Repair': 'Диагностика и ремонт',
+    'History': 'История',
+    'Maintenance': 'Обслуживание',
+    'Motorsport': 'Автоспорт',
+    'Retrofit': 'Доработка',
+  },
+};
+
+function translateCategory(title, lang) {
+  if (lang === 'ru' && categoryTranslations.ru[title]) {
+    return categoryTranslations.ru[title];
+  }
+  return title;
+}
+
+// ---------- Генератор метаданных ----------
 export async function generateMetadata({ params }) {
   const { slug, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
-  // Лёгкий запрос для метаданных
   const metaRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/articles?locale=${lang}&filters[slug][$eq]=${slug}&populate[category]=true`,
     { cache: 'no-store' }
@@ -44,8 +124,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// ... функции renderRichText, renderListItems, translateDifficulty, categoryTranslations, translateCategory остаются без изменений ...
-
+// ---------- Основной компонент ----------
 export default async function ArticlePage({ params }) {
   const { slug, lang } = await params;
 
@@ -96,7 +175,6 @@ export default async function ArticlePage({ params }) {
     ? translateCategory(article.category.title, lang)
     : null;
 
-  // Форматирование даты
   const formattedDate = article.published_date
     ? new Date(article.published_date).toLocaleDateString(
         lang === 'ru' ? 'ru-RU' : 'en-US',
