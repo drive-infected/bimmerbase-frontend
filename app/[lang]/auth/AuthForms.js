@@ -21,7 +21,7 @@ export default function AuthForms({ lang }) {
       : { username, email, password };
 
     try {
-      const res = await fetch(`http://localhost:1337/api/${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

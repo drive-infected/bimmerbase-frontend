@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import LanguageSwitcher from './LanguageSwitcher';
+import UserMenu from './UserMenu'; // импорт компонента
 
 export default function Header({ lang }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -56,9 +57,10 @@ export default function Header({ lang }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </a>
-          <a href={`/${lang}/auth`} className="text-sm text-gray-600 hover:text-[#0066B1] no-underline transition-colors">
-            {lang === 'ru' ? 'Вход' : 'Login'}
-          </a>
+
+          {/* Вход / Профиль */}
+          <UserMenu lang={lang} />
+
           <LanguageSwitcher currentLang={lang} />
 
           {/* Бургер-меню */}
