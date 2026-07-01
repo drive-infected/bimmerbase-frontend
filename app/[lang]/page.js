@@ -1,5 +1,45 @@
 // app/[lang]/page.js
 // Главная страница BimmerBase: Hero, быстрая навигация, модельный ряд, последние статьи, тематические подборки
+import Script from 'next/script';
+
+export async function generateMetadata({ params }) {
+  const { lang } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+
+  const title = lang === 'ru'
+    ? 'BimmerBase – база знаний по классическим BMW'
+    : 'BimmerBase – Knowledge base for classic BMW';
+  const description = lang === 'ru'
+    ? 'Модели, двигатели, опции, руководства по ремонту и дооснащению классических BMW. Всё в одном месте.'
+    : 'Models, engines, options, repair guides and retrofits for classic BMWs. All in one place.';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/${lang}`,
+      languages: {
+        en: `${siteUrl}/en`,
+        ru: `${siteUrl}/ru`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/${lang}`,
+      siteName: 'BimmerBase',
+      type: 'website',
+      images: [
+        {
+          url: `${siteUrl}/images/og-default.jpg`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+  };
+}
 
 export default async function Home({ params }) {
   const { lang } = await params;
@@ -71,115 +111,153 @@ export default async function Home({ params }) {
     genCount: (s.generations || []).filter(g => g.locale === lang).length,
   }));
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'BimmerBase',
+    url: siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteUrl}/${lang}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'BimmerBase',
+    url: siteUrl,
+    logo: `${siteUrl}/images/logo.png`,
+  };
+
   return (
-    <div>
-      {/* Hero-секция */}
-      <section
-        className="hero-bg relative text-gray-900 h-[200px] md:h-auto md:pt-8 md:pb-96"
-        style={{
-          backgroundImage: 'url(/images/hero-bg.webp)',
-          backgroundSize: '100% auto',
-          backgroundRepeat: 'no-repeat',
-          paddingTop: '0px',
-        }}
-      >
-        <div
-          className="max-w-5xl mx-auto px-4 text-center relative z-10 flex flex-col md:block h-[200px] md:h-auto"
-          style={{ paddingTop: '20px', paddingBottom: '0px' }}
+    <>
+      <div>
+        {/* Hero-секция */}
+        <section
+          className="hero-bg relative text-gray-900 h-[200px] md:h-auto md:pt-8 md:pb-96"
+          style={{
+            backgroundImage: 'url(/images/hero-bg.webp)',
+            backgroundSize: '100% auto',
+            backgroundRepeat: 'no-repeat',
+            paddingTop: '0px',
+          }}
         >
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
-            {t.heroTitle}
-          </h1>
-          <div className="flex-1 md:hidden" style={{ height: '80px' }}></div>
-          <p className="text-lg md:text-xl text-gray-700 md:mt-0">
-            {t.heroSubtitle}
-          </p>
-        </div>
-      </section>
-
-      {/* Быстрая навигация */}
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <QuickLink href={`/${lang}/models`} icon={<NavIcon type="models" />} title={t.models} description={t.modelsDesc} />
-            <QuickLink href={`/${lang}/engines`} icon={<NavIcon type="engines" />} title={t.engines} description={t.enginesDesc} />
-            <QuickLink href={`/${lang}/articles`} icon={<NavIcon type="articles" />} title={t.knowledge} description={t.knowledgeDesc} />
-            <QuickLink href={`/${lang}/special-versions`} icon={<NavIcon type="special" />} title={t.special} description={t.specialDesc} />
+          <div
+            className="max-w-5xl mx-auto px-4 text-center relative z-10 flex flex-col md:block h-[200px] md:h-auto"
+            style={{ paddingTop: '20px', paddingBottom: '0px' }}
+          >
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight md:mb-8">
+              {t.heroTitle}
+            </h1>
+            <div className="flex-1 md:hidden" style={{ height: '80px' }}></div>
+            <p className="text-lg md:text-xl text-gray-700 md:mt-0">
+              {t.heroSubtitle}
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Модельный ряд */}
-      <section className="bg-gray-50 py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{t.modelRangeTitle}</h2>
-            <a href={`/${lang}/models`} className="text-[#0066B1] text-sm no-underline hover:underline">
-              {lang === 'ru' ? 'Все модели' : 'All models'} →
-            </a>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {seriesWithCount.map((s) => (
-              <a key={s.documentId || s.id} href={`/${lang}/models/${s.slug}`} className="card-link text-center">
-                <span className="text-2xl font-bold block">{s.title}</span>
-                <span className="text-sm text-gray-500 mt-1">{t.generationsCount(s.genCount)}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Последние статьи */}
-      {articles.length > 0 && (
+        {/* Быстрая навигация */}
         <section className="py-8">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">{t.latestArticles}</h2>
-              <a href={`/${lang}/articles`} className="text-[#0066B1] text-sm no-underline hover:underline">
-                {t.allArticles} →
-              </a>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {articles.map((article) => (
-                <a key={article.documentId || article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
-                  <span className="text-sm text-gray-500">{article.published_date}</span>
-                  <h3 className="text-lg font-semibold mt-1 mb-2">{article.title}</h3>
-                  {article.intro && <p className="text-sm text-gray-600 line-clamp-2">{article.intro}</p>}
-                  <span className="text-[#0066B1] text-sm mt-2 inline-block">{t.readMore} →</span>
-                </a>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <QuickLink href={`/${lang}/models`} icon={<NavIcon type="models" />} title={t.models} description={t.modelsDesc} />
+              <QuickLink href={`/${lang}/engines`} icon={<NavIcon type="engines" />} title={t.engines} description={t.enginesDesc} />
+              <QuickLink href={`/${lang}/articles`} icon={<NavIcon type="articles" />} title={t.knowledge} description={t.knowledgeDesc} />
+              <QuickLink href={`/${lang}/special-versions`} icon={<NavIcon type="special" />} title={t.special} description={t.specialDesc} />
             </div>
           </div>
         </section>
-      )}
 
-      {/* Тематические подборки */}
-      {trimGroups.length > 0 && (
+        {/* Модельный ряд */}
         <section className="bg-gray-50 py-8">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">{t.trimGroupsTitle}</h2>
-              <a href={`/${lang}/trim-groups`} className="text-[#0066B1] text-sm no-underline hover:underline">
-                {t.allTrimGroups} →
+              <h2 className="text-2xl font-bold">{t.modelRangeTitle}</h2>
+              <a href={`/${lang}/models`} className="text-[#0066B1] text-sm no-underline hover:underline">
+                {lang === 'ru' ? 'Все модели' : 'All models'} →
               </a>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trimGroups.map((group) => (
-                <a key={group.documentId || group.id} href={`/${lang}/trim-groups/${group.slug}`} className="card-link flex items-center gap-4">
-                  <div className="flex-1">
-                    <span className="card-title">{group.title}</span>
-                    {group.series && <div className="text-sm text-gray-500">{group.series.title}</div>}
-                    <div className="text-xs text-gray-400 mt-1">
-                      {group.options?.length || 0} {lang === 'ru' ? 'опций' : 'options'}
-                    </div>
-                  </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {seriesWithCount.map((s) => (
+                <a key={s.documentId || s.id} href={`/${lang}/models/${s.slug}`} className="card-link text-center">
+                  <span className="text-2xl font-bold block">{s.title}</span>
+                  <span className="text-sm text-gray-500 mt-1">{t.generationsCount(s.genCount)}</span>
                 </a>
               ))}
             </div>
           </div>
         </section>
-      )}
-    </div>
+
+        {/* Последние статьи */}
+        {articles.length > 0 && (
+          <section className="py-8">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">{t.latestArticles}</h2>
+                <a href={`/${lang}/articles`} className="text-[#0066B1] text-sm no-underline hover:underline">
+                  {t.allArticles} →
+                </a>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {articles.map((article) => (
+                  <a key={article.documentId || article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+                    <span className="text-sm text-gray-500">{article.published_date}</span>
+                    <h3 className="text-lg font-semibold mt-1 mb-2">{article.title}</h3>
+                    {article.intro && <p className="text-sm text-gray-600 line-clamp-2">{article.intro}</p>}
+                    <span className="text-[#0066B1] text-sm mt-2 inline-block">{t.readMore} →</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Тематические подборки */}
+        {trimGroups.length > 0 && (
+          <section className="bg-gray-50 py-8">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">{t.trimGroupsTitle}</h2>
+                <a href={`/${lang}/trim-groups`} className="text-[#0066B1] text-sm no-underline hover:underline">
+                  {t.allTrimGroups} →
+                </a>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {trimGroups.map((group) => (
+                  <a key={group.documentId || group.id} href={`/${lang}/trim-groups/${group.slug}`} className="card-link flex items-center gap-4">
+                    <div className="flex-1">
+                      <span className="card-title">{group.title}</span>
+                      {group.series && <div className="text-sm text-gray-500">{group.series.title}</div>}
+                      <div className="text-xs text-gray-400 mt-1">
+                        {group.options?.length || 0} {lang === 'ru' ? 'опций' : 'options'}
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      <Script
+        id="schema-website"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <Script
+        id="schema-organization"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+    </>
   );
 }
 
