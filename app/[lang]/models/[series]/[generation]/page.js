@@ -4,8 +4,12 @@ import RelatedLinks from '@/components/RelatedLinks';
 import { getGenerationSections } from '@/lib/relatedLinks';
 import Script from 'next/script';
 
+function getImageUrl(image) {
+  if (!image) return null;
+  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
+}
+
 export async function generateMetadata({ params }) {
-  // series не используется, убрал из деструктурирования
   const { generation, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
@@ -30,7 +34,6 @@ export async function generateMetadata({ params }) {
   }
 
   const title = `BMW ${gen.title} – ${gen.series?.title || ''} – BimmerBase`;
-
   const years = gen.production_start
     ? `${gen.production_start.substring(0, 4)}–${gen.production_end?.substring(0, 4) || 'н.в.'}`
     : '';
@@ -76,21 +79,18 @@ export async function generateMetadata({ params }) {
 export default async function GenerationPage({ params }) {
   const { series, generation, lang } = await params;
 
-  const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/generations`;
-
   const searchParams = new URLSearchParams();
   searchParams.set('locale', lang);
   searchParams.set('filters[slug][$eq]', generation);
-
   searchParams.set('populate[series]', 'true');
   searchParams.set('populate[modifications][populate][engines]', 'true');
   searchParams.set('populate[engines][populate][engine_family]', 'true');
   searchParams.set('populate[special_versions][populate][engine]', 'true');
   searchParams.set('populate[articles]', 'true');
-  searchParams.set('populate[image]', 'true'); // 👈 добавил запрос изображения
+  searchParams.set('populate[image]', 'true');
+  searchParams.set('populate[general_info]', 'true');   // новое поле
 
-  const apiUrl = `${baseUrl}?${searchParams.toString()}`;
-
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/generations?${searchParams.toString()}`;
   const res = await fetch(apiUrl, { cache: 'no-store' });
 
   if (!res.ok) {
@@ -128,6 +128,7 @@ export default async function GenerationPage({ params }) {
   const endYear = gen.production_end?.substring(0, 4) || '...';
   const parentSeries = gen.series;
   const relatedSections = getGenerationSections(gen, lang);
+  const imgUrl = getImageUrl(gen.image);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
@@ -191,12 +192,38 @@ export default async function GenerationPage({ params }) {
           <span className="text-gray-700">{gen.title}</span>
         </nav>
 
-        <h1 className="text-4xl font-bold mt-2">
-          BMW <span className="text-[#0066B1]">{gen.title}</span>
-        </h1>
-        <p className="text-gray-600 mt-2 text-lg">
-          {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
-        </p>
+        {/* Шапка поколения */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl mb-8">
+          {/* Текстовая часть */}
+          <div className="p-5 sm:p-6 order-2 sm:order-1">
+            <h1 className="text-4xl font-bold mt-2">
+              BMW <span className="text-[#0066B1]">{gen.title}</span>
+            </h1>
+            <p className="text-gray-600 mt-2 text-lg">
+              {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
+            </p>
+            {gen.description && (
+              <div className="mt-4 text-gray-700 leading-relaxed">
+                <div dangerouslySetInnerHTML={{ __html: gen.description }} />
+              </div>
+            )}
+          </div>
+
+          {/* Изображение */}
+          <div className="h-48 sm:h-auto order-1 sm:order-2">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={gen.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                {lang === 'ru' ? 'Нет фото' : 'No image'}
+              </div>
+            )}
+          </div>
+        </div>
 
         <Tabs
           lang={lang}

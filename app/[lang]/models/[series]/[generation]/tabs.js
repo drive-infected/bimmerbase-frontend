@@ -64,7 +64,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
   const [activeTab, setActiveTab] = useState('main');
 
   const enginesWithFamily = gen?.engines || [];
-
   const familyMap = {};
   enginesWithFamily.forEach((engine) => {
     const fam = engine.engine_family;
@@ -87,6 +86,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
 
   const tabs = [
     { key: 'main', ru: 'Главное', en: 'Main' },
+    { key: 'lci', ru: 'LCI', en: 'LCI' },
     { key: 'engines', ru: 'Двигатели', en: 'Engines' },
     { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
     ...(modelCodes.length > 0
@@ -96,12 +96,13 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
 
   return (
     <div className="mt-8">
+      {/* Табы – теперь rounded-full */}
       <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
               activeTab === tab.key
                 ? 'bg-[#0066B1] text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -112,29 +113,41 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         ))}
       </div>
 
+      {/* Вкладка: Главное */}
       {activeTab === 'main' && (
         <>
-          {gen.description && (
+          {gen.general_info ? (
             <div className="rich-text">
-              <h2 className="section-title">{lang === 'ru' ? 'Обзор' : 'Overview'}</h2>
-              <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.description) }} />
+              <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.general_info) }} />
             </div>
-          )}
-          {gen.lci_info && (
-            <div className="mt-10 rich-text">
-              <h2 className="section-title">LCI</h2>
-              <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
-            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">
+              {lang === 'ru' ? 'Нет общей информации.' : 'No general info.'}
+            </p>
           )}
         </>
       )}
 
+      {/* Вкладка: LCI */}
+      {activeTab === 'lci' && (
+        <>
+          {gen.lci_info ? (
+            <div className="rich-text">
+              <div dangerouslySetInnerHTML={{ __html: renderRichText(gen.lci_info) }} />
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">
+              {lang === 'ru' ? 'Нет информации об обновлениях.' : 'No LCI info.'}
+            </p>
+          )}
+        </>
+      )}
+
+      {/* Вкладка: Двигатели */}
       {activeTab === 'engines' && (
         <div className="space-y-8">
           {Object.keys(groupedFamilies).length === 0 && (
-            <p className="text-gray-400 text-sm">
-              {lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}
-            </p>
+            <p className="text-gray-400 text-sm">{lang === 'ru' ? 'Нет данных о двигателях.' : 'No engine data.'}</p>
           )}
           {Object.entries(groupedFamilies)
             .sort(([a], [b]) => {
@@ -177,6 +190,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </div>
       )}
 
+      {/* Вкладка: Модификации */}
       {activeTab === 'modifications' && (
         <div className="space-y-10">
           {modifications.length > 0 && (
@@ -212,7 +226,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
               <h2 className="section-title">{lang === 'ru' ? 'Спецверсии' : 'Special Versions'}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {specialVersions.map((sv) => (
-                  <a key={sv.id} href={`/${lang}/special-versions/${sv.slug}`} className="card-link">
+                  <a key={sv.id} href={`/${lang}/special-versions/${sv.special_version_category?.slug || 'other'}/${sv.slug}`} className="card-link">
                     <span className="card-title">{sv.title}</span>
                     {sv.engine && (
                       <div className="card-text mt-2 space-y-1">
@@ -231,6 +245,7 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
         </div>
       )}
 
+      {/* Вкладка: Коды моделей */}
       {activeTab === 'codes' && (
         modelCodes.length > 0 ? (
           <div className="overflow-x-auto">
