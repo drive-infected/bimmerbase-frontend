@@ -31,7 +31,7 @@ export default async function SpecialVersionsPage({ params }) {
   const { lang } = await params;
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?populate=image&sort=title`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?locale=${lang}&populate=image&sort=title`,
     { cache: 'no-store' }
   );
   const data = await res.json();
@@ -52,19 +52,32 @@ export default async function SpecialVersionsPage({ params }) {
           <a
             key={cat.id}
             href={`/${lang}/special-versions/${cat.slug}`}
-            className="card-link flex gap-6 items-center hover:bg-gray-50 transition-colors"
+            className="card-link flex flex-col sm:flex-row-reverse overflow-hidden group"
           >
-            <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-              {cat.image?.url ? (
-                <img src={cat.image.url} alt={cat.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
-              )}
+            {/* Изображение справа, во всю высоту */}
+            <div className="sm:w-1/3 h-48 sm:h-auto flex-shrink-0">
+              <div className="w-full h-full bg-gray-100 rounded-lg sm:rounded-l-none sm:rounded-r-lg overflow-hidden">
+                {cat.image?.url ? (
+                  <img
+                    src={cat.image.url}
+                    alt={cat.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    No image
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold">{cat.title}</h2>
+
+            {/* Текст слева */}
+            <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
+              <h2 className="text-xl font-semibold group-hover:text-[#0066B1] transition-colors">
+                {cat.title}
+              </h2>
               {cat.description && (
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                <p className="text-sm text-gray-500 mt-2 line-clamp-3">
                   {cat.description.replace(/<[^>]+>/g, '')}
                 </p>
               )}

@@ -21,7 +21,7 @@ export default function SpecialVersionCategoryPage() {
     try {
       // Категория
       const catRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?filters[slug][$eq]=${category}&populate=image`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?locale=${lang}&filters[slug][$eq]=${category}&populate=image`,
         { cache: 'no-store' }
       );
       if (!catRes.ok) throw new Error('Category not found');
