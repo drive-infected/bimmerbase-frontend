@@ -1,31 +1,41 @@
+// app/[lang]/special-versions/page.js
+export async function generateMetadata({ params }) {
+  const { lang } = await params;
+  const title = lang === 'ru' ? 'Спецверсии BMW – BimmerBase' : 'BMW Special Versions – BimmerBase';
+  const description = lang === 'ru'
+    ? 'Каталог специальных версий BMW по категориям: M, Alpina, Limited Edition и другие.'
+    : 'Catalog of BMW special versions by categories: M, Alpina, Limited Edition and more.';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/special-versions`,
+      languages: {
+        en: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/en/special-versions`,
+        ru: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/ru/special-versions`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/special-versions`,
+      siteName: 'BimmerBase',
+      type: 'website',
+      images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/images/og-default.jpg`],
+    },
+  };
+}
+
 export default async function SpecialVersionsPage({ params }) {
   const { lang } = await params;
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?locale=${lang}&populate=*&sort=production_start`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?populate=image&sort=title`,
     { cache: 'no-store' }
   );
   const data = await res.json();
-
-  const typeLabels = {
-    M: { ru: 'M-версии', en: 'M versions' },
-    Alpina: { ru: 'Alpina', en: 'Alpina' },
-    'Limited Edition': { ru: 'Limited Edition', en: 'Limited Edition' },
-    Individual: { ru: 'BMW Individual', en: 'BMW Individual' },
-    'Удлинённая база': { ru: 'Удлинённая база', en: 'Long wheelbase' },
-    Protection: { ru: 'Защищённые', en: 'Protection' },
-    'Внедорожная': { ru: 'Внедорожные', en: 'Off-road' },
-    Спецсерия: { ru: 'Спецсерии', en: 'Special series' },
-  };
-
-  const grouped = {};
-  if (data.data) {
-    data.data.forEach((sv) => {
-      const type = sv.type || 'Спецсерия';
-      if (!grouped[type]) grouped[type] = [];
-      grouped[type].push(sv);
-    });
-  }
+  const categories = data.data || [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -33,34 +43,35 @@ export default async function SpecialVersionsPage({ params }) {
         {lang === 'ru' ? 'Специальные версии' : 'Special Versions'}
       </h1>
 
-      {Object.keys(grouped).length === 0 && (
+      {categories.length === 0 && (
         <p className="text-gray-500">{lang === 'ru' ? 'Раздел наполняется.' : 'Section is being filled.'}</p>
       )}
 
-      {Object.entries(grouped).map(([type, versions]) => (
-        <div key={type} className="mb-10">
-          <h2 className="section-title">
-            {typeLabels[type]?.[lang] || type}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {versions.map((sv) => (
-              <a key={sv.id} href={`/${lang}/special-versions/${sv.slug}`} className="card-link">
-                <strong className="text-lg block">{sv.title}</strong>
-                {sv.series && (
-                  <p className="text-sm text-gray-500 mt-1">{sv.series.title}</p>
-                )}
-                <div className="text-sm text-gray-400 mt-1">
-                  {sv.production_start?.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
-                  {sv.production_count && ` • ${sv.production_count} ${lang === 'ru' ? 'шт.' : 'units'}`}
-                </div>
-                {sv.power_hp && (
-                  <p className="text-sm text-blue-700 mt-1">{sv.power_hp} hp</p>
-                )}
-              </a>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="flex flex-col gap-6">
+        {categories.map(cat => (
+          <a
+            key={cat.id}
+            href={`/${lang}/special-versions/${cat.slug}`}
+            className="card-link flex gap-6 items-center hover:bg-gray-50 transition-colors"
+          >
+            <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+              {cat.image?.url ? (
+                <img src={cat.image.url} alt={cat.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">{cat.title}</h2>
+              {cat.description && (
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                  {cat.description.replace(/<[^>]+>/g, '')}
+                </p>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
