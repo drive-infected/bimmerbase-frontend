@@ -1,6 +1,11 @@
 // app/[lang]/models/[series]/page.js
 import Script from 'next/script';
 
+function getImageUrl(image) {
+  if (!image) return null;
+  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
+}
+
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks.map((block) => {
@@ -90,6 +95,7 @@ export default async function SeriesPage({ params }) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
+  const seriesImageUrl = getImageUrl(serie.image);
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -117,10 +123,10 @@ export default async function SeriesPage({ params }) {
         </a>
 
         <div className="flex flex-col md:flex-row gap-6 mt-4">
-          {serie.image?.url && (
+          {seriesImageUrl && (
             <div className="md:w-1/3 flex-shrink-0">
               <img
-                src={serie.image.url}
+                src={seriesImageUrl}
                 alt={serie.title}
                 className="w-full h-auto rounded-lg shadow-md object-contain"
               />
@@ -142,31 +148,34 @@ export default async function SeriesPage({ params }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {serie.generations
                 .filter((gen) => gen.locale === lang)
-                .map((gen) => (
-                  <a
-                    key={gen.id}
-                    href={`/${lang}/models/${serie.slug}/${gen.slug}`}
-                    className="card-link flex gap-4 items-start"
-                  >
-                    {gen.image?.url ? (
-                      <img
-                        src={gen.image.url}
-                        alt={gen.title}
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
-                        {lang === 'ru' ? 'Нет фото' : 'No img'}
+                .map((gen) => {
+                  const imgUrl = getImageUrl(gen.image);
+                  return (
+                    <a
+                      key={gen.id}
+                      href={`/${lang}/models/${serie.slug}/${gen.slug}`}
+                      className="card-link flex gap-4 items-start"
+                    >
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={gen.title}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
+                          {lang === 'ru' ? 'Нет фото' : 'No img'}
+                        </div>
+                      )}
+                      <div>
+                        <strong className="text-xl block">{gen.title}</strong>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <strong className="text-xl block">{gen.title}</strong>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
-                      </p>
-                    </div>
-                  </a>
-                ))}
+                    </a>
+                  );
+                })}
             </div>
           </div>
         )}

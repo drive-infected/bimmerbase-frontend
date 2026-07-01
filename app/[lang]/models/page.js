@@ -1,4 +1,9 @@
 // app/[lang]/models/page.js
+function getImageUrl(image) {
+  if (!image) return null;
+  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
+}
+
 export async function generateMetadata({ params }) {
   const { lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
@@ -49,15 +54,8 @@ export default async function ModelsPage({ params }) {
 
       {data.data && data.data.map((series) => (
         <div key={series.id} className="mb-12">
-          {/* Заголовок серии с обложкой */}
-          <div className="flex items-center gap-4 mb-6">
-            {series.image?.url ? (
-              <img
-                src={series.image.url}
-                alt={series.title}
-                className="w-16 h-16 object-contain rounded-lg"
-              />
-            ) : null}
+          {/* Заголовок серии без обложки (пока) */}
+          <div className="mb-6">
             <h2 className="section-title !mb-0">
               <a href={`/${lang}/models/${series.slug}`} className="text-blue-700 no-underline hover:underline">
                 {series.title}
@@ -65,36 +63,38 @@ export default async function ModelsPage({ params }) {
             </h2>
           </div>
 
-          {/* Поколения */}
           {series.generations && series.generations.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {series.generations
                 .filter((gen) => gen.locale === lang)
-                .map((gen) => (
-                  <a
-                    key={gen.id}
-                    href={`/${lang}/models/${series.slug}/${gen.slug}`}
-                    className="card-link flex gap-4 items-start"
-                  >
-                    {gen.image?.url ? (
-                      <img
-                        src={gen.image.url}
-                        alt={gen.title}
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
-                        {lang === 'ru' ? 'Нет фото' : 'No img'}
+                .map((gen) => {
+                  const imgUrl = getImageUrl(gen.image);
+                  return (
+                    <a
+                      key={gen.id}
+                      href={`/${lang}/models/${series.slug}/${gen.slug}`}
+                      className="card-link flex gap-4 items-start"
+                    >
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={gen.title}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
+                          {lang === 'ru' ? 'Нет фото' : 'No img'}
+                        </div>
+                      )}
+                      <div>
+                        <strong className="text-xl block">{gen.title}</strong>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <strong className="text-xl block">{gen.title}</strong>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
-                      </p>
-                    </div>
-                  </a>
-                ))}
+                    </a>
+                  );
+                })}
             </div>
           ) : (
             <p className="text-sm text-gray-400 italic">
