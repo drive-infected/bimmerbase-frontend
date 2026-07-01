@@ -9,7 +9,6 @@ function getImageUrl(image) {
   return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
 }
 
-// Простая функция для преобразования Blocks в HTML (копия из tabs, чтобы не зависеть)
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks.map((block) => {
@@ -130,7 +129,6 @@ export default async function GenerationPage({ params }) {
   searchParams.set('populate[special_versions][populate][engine]', 'true');
   searchParams.set('populate[articles]', 'true');
   searchParams.set('populate[image]', 'true');
-  // populate[general_info] не нужен, это не связь
 
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/generations?${searchParams.toString()}`;
   const res = await fetch(apiUrl, { cache: 'no-store' });
@@ -219,7 +217,7 @@ export default async function GenerationPage({ params }) {
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <nav className="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
           <a href={`/${lang}/models`} className="text-blue-700 no-underline hover:underline">
             {lang === 'ru' ? 'Модельный ряд' : 'Model Range'}
           </a>
@@ -235,9 +233,25 @@ export default async function GenerationPage({ params }) {
           <span className="text-gray-700">{gen.title}</span>
         </nav>
 
-        {/* Шапка поколения */}
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl mb-8">
-          <div className="p-5 sm:p-6 order-2 sm:order-1">
+        {/* Шапка поколения как на странице категории */}
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Изображение слева */}
+          <div className="md:w-1/3 flex-shrink-0">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={gen.title}
+                className="w-full h-auto rounded-lg shadow-md object-contain"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                {lang === 'ru' ? 'Нет фото' : 'No image'}
+              </div>
+            )}
+          </div>
+
+          {/* Текст справа */}
+          <div className="flex-1">
             <h1 className="text-4xl font-bold mt-2">
               BMW <span className="text-[#0066B1]">{gen.title}</span>
             </h1>
@@ -247,19 +261,6 @@ export default async function GenerationPage({ params }) {
             {descriptionHtml && (
               <div className="mt-4 text-gray-700 leading-relaxed">
                 <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
-              </div>
-            )}
-          </div>
-          <div className="h-48 sm:h-auto order-1 sm:order-2">
-            {imgUrl ? (
-              <img
-                src={imgUrl}
-                alt={gen.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                {lang === 'ru' ? 'Нет фото' : 'No image'}
               </div>
             )}
           </div>
