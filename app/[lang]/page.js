@@ -1,7 +1,5 @@
 // app/[lang]/page.js
-// Главная страница BimmerBase: Hero, быстрая навигация, модельный ряд, последние статьи, тематические подборки
 import Script from 'next/script';
-import Image from 'next/image';
 
 export async function generateMetadata({ params }) {
   const { lang } = await params;
@@ -71,8 +69,8 @@ export default async function Home({ params }) {
   const t = {
     heroTitle: 'BimmerBase',
     heroSubtitle: lang === 'ru'
-      ? 'База знаний по классическим автомобилям BMW'
-      : 'Knowledge base for classic BMW automobiles',
+      ? 'База знаний по классическим автомобилям\u00A0BMW'
+      : 'Knowledge base for classic BMW\u00A0automobiles',
     heroDescription: lang === 'ru'
       ? 'Модели, двигатели, опции, руководства по ремонту и дооснащению — всё в одном месте.'
       : 'Models, engines, options, repair guides and retrofits — all in one place.',
@@ -85,8 +83,8 @@ export default async function Home({ params }) {
     enginesDesc: lang === 'ru' ? 'Каталог по семействам' : 'Catalog by families',
     knowledge: lang === 'ru' ? 'База знаний' : 'Knowledge Base',
     knowledgeDesc: lang === 'ru' ? 'Статьи по ремонту и обслуживанию' : 'Repair and maintenance articles',
-    special: lang === 'ru' ? 'Спецверсии и опции' : 'Special Versions & Options',
-    specialDesc: lang === 'ru' ? 'M-версии, Alpina, SA-коды' : 'M versions, Alpina, SA codes',
+    special: lang === 'ru' ? 'Спецверсии' : 'Special Versions',
+    specialDesc: lang === 'ru' ? 'Ограниченные серии и спецтранспорт' : 'Limited editions & special vehicles',
     modelRangeTitle: lang === 'ru' ? 'Модельный ряд' : 'Model Range',
     latestArticles: lang === 'ru' ? 'Последние статьи' : 'Latest Articles',
     trimGroupsTitle: lang === 'ru' ? 'Тематические подборки' : 'Thematic Collections',
@@ -141,33 +139,33 @@ export default async function Home({ params }) {
     <>
       <div>
         {/* Hero-секция */}
-        <section className="relative text-gray-900 h-[200px] md:h-[400px] overflow-hidden">
-          <Image
+        <section className="relative overflow-hidden">
+          <img
             src="/images/hero-bg.webp"
             alt="BimmerBase hero background"
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
+            className="w-full h-auto block"
           />
-          <div className="relative z-10 flex flex-col items-center justify-center h-full max-w-5xl mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+          <div className="absolute inset-0 flex flex-col items-center justify-start pt-4 md:pt-10 max-w-5xl mx-auto px-4 text-center z-10 pointer-events-none">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
               {t.heroTitle}
             </h1>
-            <p className="text-lg md:text-xl text-gray-700">
+            <p className="hidden md:block text-lg md:text-xl text-gray-700 mt-2">
               {t.heroSubtitle}
             </p>
           </div>
+          <p className="block md:hidden text-lg text-gray-700 text-center px-4 mt-2">
+            {t.heroSubtitle}
+          </p>
         </section>
 
         {/* Быстрая навигация */}
         <section className="py-8">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <QuickLink href={`/${lang}/models`} icon={<NavIcon type="models" />} title={t.models} description={t.modelsDesc} />
               <QuickLink href={`/${lang}/engines`} icon={<NavIcon type="engines" />} title={t.engines} description={t.enginesDesc} />
-              <QuickLink href={`/${lang}/articles`} icon={<NavIcon type="articles" />} title={t.knowledge} description={t.knowledgeDesc} />
               <QuickLink href={`/${lang}/special-versions`} icon={<NavIcon type="special" />} title={t.special} description={t.specialDesc} />
+              <QuickLink href={`/${lang}/articles`} icon={<NavIcon type="articles" />} title={t.knowledge} description={t.knowledgeDesc} />
             </div>
           </div>
         </section>

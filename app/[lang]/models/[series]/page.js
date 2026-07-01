@@ -144,16 +144,18 @@ export default async function SeriesPage({ params }) {
         </a>
 
         <div className="flex flex-col md:flex-row gap-6 mt-4">
-          <div className="md:w-1/3 flex-shrink-0">
-            <OptimizedImage
-              image={serie.image}
-              alt={serie.title}
-              width={400}
-              height={300}
-              className="w-full h-auto rounded-lg shadow-md object-contain"
-              priority
-            />
-          </div>
+          {serie.image && (
+            <div className="md:w-1/3 flex-shrink-0 relative">
+              <OptimizedImage
+                image={serie.image}
+                alt={serie.title}
+                width={400}
+                height={300}
+                className="w-full h-auto rounded-lg shadow-md object-contain"
+                priority
+              />
+            </div>
+          )}
           <div className="flex-1">
             <h1 className="text-4xl font-bold">{serie.title}</h1>
             {serie.description && (
@@ -191,7 +193,7 @@ export default async function SeriesPage({ params }) {
                           </p>
                         )}
                       </div>
-                      <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+                      <div className="h-48 sm:h-auto order-1 sm:order-2 relative bg-gray-100">
                         <OptimizedImage
                           image={gen.image}
                           alt={gen.title}

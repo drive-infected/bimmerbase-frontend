@@ -1,4 +1,3 @@
-// app/[lang]/special-versions/[category]/page.js
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -85,7 +84,7 @@ export default function SpecialVersionCategoryPage() {
       </Link>
 
       <div className="flex flex-col md:flex-row gap-8 mt-4">
-        <div className="md:w-1/3">
+        <div className="md:w-1/3 relative">
           <OptimizedImage
             image={categoryData.image}
             alt={categoryData.title}

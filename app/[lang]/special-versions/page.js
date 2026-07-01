@@ -68,7 +68,7 @@ export default async function SpecialVersionsPage({ params }) {
               )}
             </div>
 
-            <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+            <div className="h-48 sm:h-auto order-1 sm:order-2 relative bg-gray-100">
               <OptimizedImage
                 image={cat.image}
                 alt={cat.title}

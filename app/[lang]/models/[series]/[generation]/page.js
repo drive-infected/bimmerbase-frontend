@@ -229,7 +229,7 @@ export default async function GenerationPage({ params }) {
         </nav>
 
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="md:w-1/3 flex-shrink-0">
+          <div className="md:w-1/3 flex-shrink-0 relative">
             <OptimizedImage
               image={gen.image}
               alt={gen.title}

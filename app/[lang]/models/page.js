@@ -111,7 +111,7 @@ export default async function ModelsPage({ params }) {
                         )}
                       </div>
 
-                      <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+                      <div className="h-48 sm:h-auto order-1 sm:order-2 relative bg-gray-100">
                         <OptimizedImage
                           image={gen.image}
                           alt={gen.title}
