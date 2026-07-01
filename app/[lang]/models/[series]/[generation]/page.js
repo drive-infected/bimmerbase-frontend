@@ -9,6 +9,48 @@ function getImageUrl(image) {
   return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
 }
 
+// Простая функция для преобразования Blocks в HTML (копия из tabs, чтобы не зависеть)
+function renderRichText(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  return blocks.map((block) => {
+    if (block.type === 'paragraph') {
+      const text = block.children?.map((c) => {
+        let content = c.text || '';
+        if (c.bold) content = `<strong>${content}</strong>`;
+        if (c.italic) content = `<em>${content}</em>`;
+        return content;
+      }).join('');
+      return text ? `<p>${text}</p>` : '';
+    }
+    if (block.type === 'heading') {
+      const level = block.level || 2;
+      const text = block.children?.map((c) => c.text).join('');
+      return `<h${level}>${text}</h${level}>`;
+    }
+    if (block.type === 'list') {
+      const tag = block.format === 'ordered' ? 'ol' : 'ul';
+      const items = renderListItems(block.children);
+      return `<${tag}>${items}</${tag}>`;
+    }
+    return '';
+  }).join('');
+}
+
+function renderListItems(children) {
+  if (!children || !Array.isArray(children)) return '';
+  return children.map((child) => {
+    if (child.type === 'list-item') {
+      const text = child.children?.filter((c) => c.type === 'text')?.map((c) => c.text || '').join('') || '';
+      return `<li>${text}</li>`;
+    }
+    if (child.type === 'list') {
+      const tag = child.format === 'ordered' ? 'ol' : 'ul';
+      return `<${tag}>${renderListItems(child.children)}</${tag}>`;
+    }
+    return '';
+  }).join('');
+}
+
 export async function generateMetadata({ params }) {
   const { generation, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
@@ -88,7 +130,7 @@ export default async function GenerationPage({ params }) {
   searchParams.set('populate[special_versions][populate][engine]', 'true');
   searchParams.set('populate[articles]', 'true');
   searchParams.set('populate[image]', 'true');
-  searchParams.set('populate[general_info]', 'true');   // новое поле
+  // populate[general_info] не нужен, это не связь
 
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/generations?${searchParams.toString()}`;
   const res = await fetch(apiUrl, { cache: 'no-store' });
@@ -129,6 +171,7 @@ export default async function GenerationPage({ params }) {
   const parentSeries = gen.series;
   const relatedSections = getGenerationSections(gen, lang);
   const imgUrl = getImageUrl(gen.image);
+  const descriptionHtml = gen.description ? renderRichText(gen.description) : null;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
@@ -194,7 +237,6 @@ export default async function GenerationPage({ params }) {
 
         {/* Шапка поколения */}
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl mb-8">
-          {/* Текстовая часть */}
           <div className="p-5 sm:p-6 order-2 sm:order-1">
             <h1 className="text-4xl font-bold mt-2">
               BMW <span className="text-[#0066B1]">{gen.title}</span>
@@ -202,14 +244,12 @@ export default async function GenerationPage({ params }) {
             <p className="text-gray-600 mt-2 text-lg">
               {lang === 'ru' ? 'Годы выпуска' : 'Production years'}: {startYear}–{endYear}
             </p>
-            {gen.description && (
+            {descriptionHtml && (
               <div className="mt-4 text-gray-700 leading-relaxed">
-                <div dangerouslySetInnerHTML={{ __html: gen.description }} />
+                <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
               </div>
             )}
           </div>
-
-          {/* Изображение */}
           <div className="h-48 sm:h-auto order-1 sm:order-2">
             {imgUrl ? (
               <img
