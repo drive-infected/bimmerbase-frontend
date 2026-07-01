@@ -1,8 +1,5 @@
 // app/[lang]/models/page.js
-function getImageUrl(image) {
-  if (!image) return null;
-  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
-}
+import OptimizedImage from '@/components/OptimizedImage';
 
 function extractDescription(gen) {
   const blocks = gen.description;
@@ -93,7 +90,6 @@ export default async function ModelsPage({ params }) {
               {series.generations
                 .filter((gen) => gen.locale === lang)
                 .map((gen) => {
-                  const imgUrl = getImageUrl(gen.image);
                   const desc = extractDescription(gen);
                   return (
                     <a
@@ -101,7 +97,6 @@ export default async function ModelsPage({ params }) {
                       href={`/${lang}/models/${series.slug}/${gen.slug}`}
                       className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl hover:shadow-md transition-shadow group"
                     >
-                      {/* Текст слева на десктопе (order-2 sm:order-1), на мобильных снизу */}
                       <div className="p-5 sm:p-6 order-2 sm:order-1">
                         <strong className="text-lg block group-hover:text-[#0066B1] transition-colors">
                           {gen.title}
@@ -116,19 +111,14 @@ export default async function ModelsPage({ params }) {
                         )}
                       </div>
 
-                      {/* Изображение справа на десктопе (order-1 sm:order-2), на мобильных сверху */}
-                      <div className="h-48 sm:h-auto order-1 sm:order-2">
-                        {imgUrl ? (
-                          <img
-                            src={imgUrl}
-                            alt={gen.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                            {lang === 'ru' ? 'Нет фото' : 'No img'}
-                          </div>
-                        )}
+                      <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+                        <OptimizedImage
+                          image={gen.image}
+                          alt={gen.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, 280px"
+                        />
                       </div>
                     </a>
                   );

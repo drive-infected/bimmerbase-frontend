@@ -1,6 +1,9 @@
 // app/[lang]/special-versions/page.js
+import OptimizedImage from '@/components/OptimizedImage';
+
 export async function generateMetadata({ params }) {
   const { lang } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
   const title = lang === 'ru' ? 'Спецверсии BMW – BimmerBase' : 'BMW Special Versions – BimmerBase';
   const description = lang === 'ru'
     ? 'Каталог специальных версий BMW по категориям: M, Alpina, Limited Edition и другие.'
@@ -10,19 +13,19 @@ export async function generateMetadata({ params }) {
     title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/special-versions`,
+      canonical: `${siteUrl}/${lang}/special-versions`,
       languages: {
-        en: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/en/special-versions`,
-        ru: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/ru/special-versions`,
+        en: `${siteUrl}/en/special-versions`,
+        ru: `${siteUrl}/ru/special-versions`,
       },
     },
     openGraph: {
       title,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/${lang}/special-versions`,
+      url: `${siteUrl}/${lang}/special-versions`,
       siteName: 'BimmerBase',
       type: 'website',
-      images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru'}/images/og-default.jpg`],
+      images: [`${siteUrl}/images/og-default.jpg`],
     },
   };
 }
@@ -54,7 +57,6 @@ export default async function SpecialVersionsPage({ params }) {
             href={`/${lang}/special-versions/${cat.slug}`}
             className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl hover:shadow-md transition-shadow group"
           >
-            {/* Текстовая часть (на мобильных идёт второй строкой, на десктопе — левая колонка) */}
             <div className="p-5 sm:p-6 order-2 sm:order-1">
               <h2 className="text-xl font-semibold group-hover:text-[#0066B1] transition-colors">
                 {cat.title}
@@ -66,19 +68,14 @@ export default async function SpecialVersionsPage({ params }) {
               )}
             </div>
 
-            {/* Блок изображения (на мобильных первая строка, на десктопе — правая колонка) */}
-            <div className="h-48 sm:h-auto order-1 sm:order-2">
-              {cat.image?.url ? (
-                <img
-                  src={cat.image.url}
-                  alt={cat.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                  No image
-                </div>
-              )}
+            <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+              <OptimizedImage
+                image={cat.image}
+                alt={cat.title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, 280px"
+              />
             </div>
           </a>
         ))}

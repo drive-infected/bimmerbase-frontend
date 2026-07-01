@@ -1,8 +1,10 @@
+// app/[lang]/special-versions/[category]/page.js
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import OptimizedImage from '@/components/OptimizedImage';
 
 export default function SpecialVersionCategoryPage() {
   const { lang, category } = useParams();
@@ -19,7 +21,6 @@ export default function SpecialVersionCategoryPage() {
     setLoading(true);
     setError(null);
     try {
-      // Категория
       const catRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/special-version-categories?locale=${lang}&filters[slug][$eq]=${category}&populate=image`,
         { cache: 'no-store' }
@@ -29,7 +30,6 @@ export default function SpecialVersionCategoryPage() {
       const cat = catData.data?.[0];
       setCategoryData(cat);
 
-      // Спецверсии с фильтром
       const svUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL}/api/special-versions`);
       svUrl.searchParams.set('locale', lang);
       svUrl.searchParams.set('filters[special_version_category][slug][$eq]', category);
@@ -45,7 +45,6 @@ export default function SpecialVersionCategoryPage() {
       const svData = await svRes.json();
       setSpecialVersions(svData.data || []);
 
-      // Все уникальные серии для кнопок (без учёта фильтра)
       const allSvUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL}/api/special-versions`);
       allSvUrl.searchParams.set('locale', lang);
       allSvUrl.searchParams.set('filters[special_version_category][slug][$eq]', category);
@@ -87,13 +86,14 @@ export default function SpecialVersionCategoryPage() {
 
       <div className="flex flex-col md:flex-row gap-8 mt-4">
         <div className="md:w-1/3">
-          {categoryData.image?.url && (
-            <img
-              src={categoryData.image.url}
-              alt={categoryData.title}
-              className="w-full h-auto rounded-lg shadow-md"
-            />
-          )}
+          <OptimizedImage
+            image={categoryData.image}
+            alt={categoryData.title}
+            width={400}
+            height={300}
+            className="w-full h-auto rounded-lg shadow-md object-contain"
+            priority
+          />
         </div>
         <div className="md:w-2/3">
           <h1 className="text-4xl font-bold">{categoryData.title}</h1>
@@ -105,7 +105,6 @@ export default function SpecialVersionCategoryPage() {
         </div>
       </div>
 
-      {/* Фильтр по сериям */}
       <div className="mt-8 flex flex-wrap gap-2">
         <Link
           href={`/${lang}/special-versions/${category}`}
@@ -124,7 +123,6 @@ export default function SpecialVersionCategoryPage() {
         ))}
       </div>
 
-      {/* Сетка версий */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {specialVersions.map(sv => (
           <Link

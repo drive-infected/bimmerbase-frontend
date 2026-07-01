@@ -1,10 +1,6 @@
 // app/[lang]/models/[series]/page.js
 import Script from 'next/script';
-
-function getImageUrl(image) {
-  if (!image) return null;
-  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
-}
+import OptimizedImage from '@/components/OptimizedImage';
 
 function extractDescription(gen) {
   const blocks = gen.description;
@@ -121,7 +117,6 @@ export default async function SeriesPage({ params }) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
-  const seriesImageUrl = getImageUrl(serie.image);
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -149,15 +144,16 @@ export default async function SeriesPage({ params }) {
         </a>
 
         <div className="flex flex-col md:flex-row gap-6 mt-4">
-          {seriesImageUrl && (
-            <div className="md:w-1/3 flex-shrink-0">
-              <img
-                src={seriesImageUrl}
-                alt={serie.title}
-                className="w-full h-auto rounded-lg shadow-md object-contain"
-              />
-            </div>
-          )}
+          <div className="md:w-1/3 flex-shrink-0">
+            <OptimizedImage
+              image={serie.image}
+              alt={serie.title}
+              width={400}
+              height={300}
+              className="w-full h-auto rounded-lg shadow-md object-contain"
+              priority
+            />
+          </div>
           <div className="flex-1">
             <h1 className="text-4xl font-bold">{serie.title}</h1>
             {serie.description && (
@@ -175,7 +171,6 @@ export default async function SeriesPage({ params }) {
               {serie.generations
                 .filter((gen) => gen.locale === lang)
                 .map((gen) => {
-                  const imgUrl = getImageUrl(gen.image);
                   const desc = extractDescription(gen);
                   return (
                     <a
@@ -196,18 +191,14 @@ export default async function SeriesPage({ params }) {
                           </p>
                         )}
                       </div>
-                      <div className="h-48 sm:h-auto order-1 sm:order-2">
-                        {imgUrl ? (
-                          <img
-                            src={imgUrl}
-                            alt={gen.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                            {lang === 'ru' ? 'Нет фото' : 'No img'}
-                          </div>
-                        )}
+                      <div className="h-48 sm:h-auto order-1 sm:order-2 bg-gray-100">
+                        <OptimizedImage
+                          image={gen.image}
+                          alt={gen.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, 280px"
+                        />
                       </div>
                     </a>
                   );

@@ -3,11 +3,7 @@ import Tabs from './tabs';
 import RelatedLinks from '@/components/RelatedLinks';
 import { getGenerationSections } from '@/lib/relatedLinks';
 import Script from 'next/script';
-
-function getImageUrl(image) {
-  if (!image) return null;
-  return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
-}
+import OptimizedImage from '@/components/OptimizedImage';
 
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -168,7 +164,6 @@ export default async function GenerationPage({ params }) {
   const endYear = gen.production_end?.substring(0, 4) || '...';
   const parentSeries = gen.series;
   const relatedSections = getGenerationSections(gen, lang);
-  const imgUrl = getImageUrl(gen.image);
   const descriptionHtml = gen.description ? renderRichText(gen.description) : null;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
@@ -233,24 +228,17 @@ export default async function GenerationPage({ params }) {
           <span className="text-gray-700">{gen.title}</span>
         </nav>
 
-        {/* Шапка поколения как на странице категории */}
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Изображение слева */}
           <div className="md:w-1/3 flex-shrink-0">
-            {imgUrl ? (
-              <img
-                src={imgUrl}
-                alt={gen.title}
-                className="w-full h-auto rounded-lg shadow-md object-contain"
-              />
-            ) : (
-              <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">
-                {lang === 'ru' ? 'Нет фото' : 'No image'}
-              </div>
-            )}
+            <OptimizedImage
+              image={gen.image}
+              alt={gen.title}
+              width={400}
+              height={300}
+              className="w-full h-auto rounded-lg shadow-md object-contain"
+              priority
+            />
           </div>
-
-          {/* Текст справа */}
           <div className="flex-1">
             <h1 className="text-4xl font-bold mt-2">
               BMW <span className="text-[#0066B1]">{gen.title}</span>
