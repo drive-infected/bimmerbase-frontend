@@ -52,27 +52,10 @@ export default async function SpecialVersionsPage({ params }) {
           <a
             key={cat.id}
             href={`/${lang}/special-versions/${cat.slug}`}
-            className="card-link flex flex-col sm:flex-row-reverse overflow-hidden group"
+            className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl hover:shadow-md transition-shadow group"
           >
-            {/* Изображение справа, во всю высоту */}
-            <div className="sm:w-1/3 h-48 sm:h-auto flex-shrink-0">
-              <div className="w-full h-full bg-gray-100 rounded-lg sm:rounded-l-none sm:rounded-r-lg overflow-hidden">
-                {cat.image?.url ? (
-                  <img
-                    src={cat.image.url}
-                    alt={cat.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    No image
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Текст слева */}
-            <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
+            {/* Текстовая часть (на мобильных идёт второй строкой, на десктопе — левая колонка) */}
+            <div className="p-5 sm:p-6 order-2 sm:order-1">
               <h2 className="text-xl font-semibold group-hover:text-[#0066B1] transition-colors">
                 {cat.title}
               </h2>
@@ -80,6 +63,21 @@ export default async function SpecialVersionsPage({ params }) {
                 <p className="text-sm text-gray-500 mt-2 line-clamp-3">
                   {cat.description.replace(/<[^>]+>/g, '')}
                 </p>
+              )}
+            </div>
+
+            {/* Блок изображения (на мобильных первая строка, на десктопе — правая колонка) */}
+            <div className="h-48 sm:h-auto order-1 sm:order-2">
+              {cat.image?.url ? (
+                <img
+                  src={cat.image.url}
+                  alt={cat.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                  No image
+                </div>
               )}
             </div>
           </a>
