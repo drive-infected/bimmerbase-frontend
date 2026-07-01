@@ -5,7 +5,8 @@ import { getGenerationSections } from '@/lib/relatedLinks';
 import Script from 'next/script';
 
 export async function generateMetadata({ params }) {
-  const { series, generation, lang } = await params;
+  // series не используется, убрал из деструктурирования
+  const { generation, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
   const metaSearchParams = new URLSearchParams({
@@ -30,7 +31,6 @@ export async function generateMetadata({ params }) {
 
   const title = `BMW ${gen.title} – ${gen.series?.title || ''} – BimmerBase`;
 
-  // Формируем описание вручную, используя данные
   const years = gen.production_start
     ? `${gen.production_start.substring(0, 4)}–${gen.production_end?.substring(0, 4) || 'н.в.'}`
     : '';
@@ -43,7 +43,6 @@ export async function generateMetadata({ params }) {
   } else {
     description = `BMW ${gen.title} (${gen.series?.title || 'Series'}) — specifications, overview, available engines (${enginesCount}) and modifications (${modsCount}). Production years: ${years}.`;
   }
-  // Обрезаем до 160 символов
   description = description.substring(0, 160);
 
   return {
@@ -88,6 +87,7 @@ export default async function GenerationPage({ params }) {
   searchParams.set('populate[engines][populate][engine_family]', 'true');
   searchParams.set('populate[special_versions][populate][engine]', 'true');
   searchParams.set('populate[articles]', 'true');
+  searchParams.set('populate[image]', 'true'); // 👈 добавил запрос изображения
 
   const apiUrl = `${baseUrl}?${searchParams.toString()}`;
 

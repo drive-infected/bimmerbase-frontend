@@ -6,6 +6,16 @@ function getImageUrl(image) {
   return image.url || image.formats?.large?.url || image.formats?.medium?.url || image.formats?.small?.url || null;
 }
 
+function extractDescription(gen) {
+  const blocks = gen.description;
+  if (!blocks || !Array.isArray(blocks) || blocks.length === 0) return null;
+  const firstBlock = blocks[0];
+  if (firstBlock.children) {
+    return firstBlock.children.map(c => c.text || '').join('').trim();
+  }
+  return null;
+}
+
 function renderRichText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks.map((block) => {
@@ -37,7 +47,7 @@ export async function generateMetadata({ params }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/series?locale=${lang}&filters[slug][$eq]=${series}&populate=*`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/series?locale=${lang}&filters[slug][$eq]=${series}&populate[image]=true`,
     { cache: 'no-store' }
   );
   const data = await res.json();
@@ -76,10 +86,26 @@ export async function generateMetadata({ params }) {
 export default async function SeriesPage({ params }) {
   const { series, lang } = await params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/series?locale=${lang}&filters[slug][$eq]=${series}&populate=*`,
-    { cache: 'no-store' }
-  );
+  const searchParams = new URLSearchParams();
+  searchParams.set('locale', lang);
+  searchParams.set('filters[slug][$eq]', series);
+  searchParams.set('populate[image]', 'true');
+  searchParams.set('populate[generations][populate][image]', 'true');
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/series?${searchParams.toString()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+
+  if (!res.ok) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-red-600">
+          {lang === 'ru' ? 'Ошибка загрузки серии' : 'Series loading error'}
+        </h1>
+        <p className="text-sm text-gray-500">Status: {res.status}</p>
+      </div>
+    );
+  }
+
   const data = await res.json();
   const serie = data.data?.[0];
 
@@ -145,33 +171,43 @@ export default async function SeriesPage({ params }) {
         {serie.generations && serie.generations.length > 0 && (
           <div className="mt-10">
             <h2 className="section-title">{lang === 'ru' ? 'Поколения' : 'Generations'}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-4">
               {serie.generations
                 .filter((gen) => gen.locale === lang)
                 .map((gen) => {
                   const imgUrl = getImageUrl(gen.image);
+                  const desc = extractDescription(gen);
                   return (
                     <a
                       key={gen.id}
                       href={`/${lang}/models/${serie.slug}/${gen.slug}`}
-                      className="card-link flex gap-4 items-start"
+                      className="grid grid-cols-1 sm:grid-cols-[1fr_280px] overflow-hidden border border-gray-200 rounded-xl hover:shadow-md transition-shadow group"
                     >
-                      {imgUrl ? (
-                        <img
-                          src={imgUrl}
-                          alt={gen.title}
-                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
-                          {lang === 'ru' ? 'Нет фото' : 'No img'}
-                        </div>
-                      )}
-                      <div>
-                        <strong className="text-xl block">{gen.title}</strong>
-                        <p className="text-sm text-gray-500 mt-1">
+                      <div className="p-5 sm:p-6 order-2 sm:order-1">
+                        <strong className="text-lg block group-hover:text-[#0066B1] transition-colors">
+                          {gen.title}
+                        </strong>
+                        <p className="text-xs text-gray-500 mt-1">
                           {gen.production_start?.substring(0, 4)}–{gen.production_end?.substring(0, 4)}
                         </p>
+                        {desc && (
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                            {desc}
+                          </p>
+                        )}
+                      </div>
+                      <div className="h-48 sm:h-auto order-1 sm:order-2">
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={gen.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            {lang === 'ru' ? 'Нет фото' : 'No img'}
+                          </div>
+                        )}
                       </div>
                     </a>
                   );
