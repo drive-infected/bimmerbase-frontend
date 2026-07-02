@@ -110,6 +110,7 @@ export default async function SpecialVersionPage({ params }) {
   const relatedSections = getSpecialVersionSections(sv, lang);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
+  // Хлебные крошки (без поколения)
   const breadcrumbItems = [
     {
       name: lang === 'ru' ? 'Спецверсии' : 'Special Versions',
@@ -118,10 +119,6 @@ export default async function SpecialVersionPage({ params }) {
     sv.special_version_category && {
       name: sv.special_version_category.title,
       href: `/${lang}/special-versions/${sv.special_version_category.slug}`,
-    },
-    sv.generation && {
-      name: sv.generation.title,
-      href: `/${lang}/models/${sv.generation.series?.slug || ''}/${sv.generation.slug}`,
     },
     {
       name: sv.title,
@@ -158,7 +155,8 @@ export default async function SpecialVersionPage({ params }) {
   return (
     <>
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <nav className="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        {/* Хлебные крошки */}
+        <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
           {breadcrumbItems.map((item, index) => (
             <span key={index}>
               {index > 0 && <span className="mx-2">/</span>}
@@ -173,56 +171,65 @@ export default async function SpecialVersionPage({ params }) {
           ))}
         </nav>
 
-        <h1 className="text-4xl font-bold mt-2">{sv.title}</h1>
-
-        <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
-          {sv.special_version_category && (
-            <span className="bg-[#0066B1] text-white px-3 py-1 rounded-full text-xs font-medium">
-              {sv.special_version_category.title}
-            </span>
-          )}
-          {sv.production_start && (
-            <span>
-              {sv.production_start.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
-            </span>
-          )}
-          {sv.production_count && (
-            <span>
-              {sv.production_count} {lang === 'ru' ? 'шт.' : 'units'}
-            </span>
-          )}
-          {sv.power_hp && <span className="font-semibold">{sv.power_hp} hp</span>}
+        {/* Шапка страницы */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold">{sv.title}</h1>
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
+                {sv.special_version_category && (
+                  <span className="bg-[#0066B1] text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                    {sv.special_version_category.title}
+                  </span>
+                )}
+                {sv.production_start && (
+                  <span>
+                    {sv.production_start.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
+                  </span>
+                )}
+                {sv.production_count && (
+                  <span>
+                    {sv.production_count} {lang === 'ru' ? 'шт.' : 'units'}
+                  </span>
+                )}
+                {sv.power_hp && <span className="font-semibold">{sv.power_hp} hp</span>}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {sv.description && (
-          <div className="mt-8 rich-text">
-            <h2 className="section-title">{lang === 'ru' ? 'Описание' : 'Description'}</h2>
-            <div dangerouslySetInnerHTML={{ __html: renderRichText(sv.description) }} />
-          </div>
-        )}
+        {/* Контент страницы */}
+        <div className="space-y-8">
+          {sv.description && (
+            <section>
+              <h2 className="section-title">{lang === 'ru' ? 'Описание' : 'Description'}</h2>
+              <div className="rich-text" dangerouslySetInnerHTML={{ __html: renderRichText(sv.description) }} />
+            </section>
+          )}
 
-        {sv.differences && (
-          <div className="mt-8 rich-text">
-            <h2 className="section-title">{lang === 'ru' ? 'Отличия от базовой модели' : 'Differences from base model'}</h2>
-            <div dangerouslySetInnerHTML={{ __html: renderRichText(sv.differences) }} />
-          </div>
-        )}
+          {sv.differences && (
+            <section>
+              <h2 className="section-title">{lang === 'ru' ? 'Отличия от базовой модели' : 'Differences from base model'}</h2>
+              <div className="rich-text" dangerouslySetInnerHTML={{ __html: renderRichText(sv.differences) }} />
+            </section>
+          )}
 
-        {sv.base_options && sv.base_options.length > 0 && (
-          <div className="mt-8">
-            <h2 className="section-title">{lang === 'ru' ? 'Стандартное оснащение' : 'Standard Equipment'}</h2>
-            <ul className="space-y-1 text-sm">
-              {sv.base_options.map((opt) => (
-                <li key={opt.id} className="flex gap-2">
-                  <span className="tag mr-2 font-mono">{opt.sa_code}</span>
-                  <span>{opt.title}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {sv.base_options && sv.base_options.length > 0 && (
+            <section>
+              <h2 className="section-title">{lang === 'ru' ? 'Стандартное оснащение' : 'Standard Equipment'}</h2>
+              <ul className="space-y-1 text-sm">
+                {sv.base_options.map((opt) => (
+                  <li key={opt.id} className="flex gap-2">
+                    <span className="tag mr-2 font-mono">{opt.sa_code}</span>
+                    <span>{opt.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-        <RelatedLinks sections={relatedSections} lang={lang} />
+          <RelatedLinks sections={relatedSections} lang={lang} />
+        </div>
       </div>
 
       <Script
