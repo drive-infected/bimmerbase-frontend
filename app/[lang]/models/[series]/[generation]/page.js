@@ -160,6 +160,27 @@ export default async function GenerationPage({ params }) {
     );
   }
 
+  // Загрузка кодов моделей
+  let modelCodes = [];
+  try {
+    let page = 1;
+    let allCodes = [];
+    while (true) {
+      const codesRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/model-codes?filters[generation][documentId][$eq]=${gen.documentId}&populate=*&pagination[pageSize]=100&pagination[page]=${page}`,
+        { cache: 'no-store' }
+      );
+      const codesData = await codesRes.json();
+      const pageData = codesData.data || [];
+      allCodes = allCodes.concat(pageData);
+      if (pageData.length < 100) break;
+      page++;
+    }
+    modelCodes = allCodes.sort((a, b) => (a.id || 0) - (b.id || 0));
+  } catch (e) {
+    console.error('Failed to fetch model codes', e);
+  }
+
   const startYear = gen.production_start?.substring(0, 4) || '...';
   const endYear = gen.production_end?.substring(0, 4) || '...';
   const parentSeries = gen.series;
@@ -259,7 +280,7 @@ export default async function GenerationPage({ params }) {
           gen={gen}
           modifications={gen.modifications || []}
           specialVersions={gen.special_versions || []}
-          modelCodes={[]}
+          modelCodes={modelCodes}
         />
 
         <RelatedLinks sections={relatedSections} lang={lang} />

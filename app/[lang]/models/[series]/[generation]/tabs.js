@@ -96,7 +96,6 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
 
   return (
     <div className="mt-8">
-      {/* Табы – теперь rounded-full */}
       <div className="flex gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto max-w-full">
         {tabs.map((tab) => (
           <button
@@ -248,8 +247,8 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
       {/* Вкладка: Коды моделей */}
       {activeTab === 'codes' && (
         modelCodes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b">
                   <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Код' : 'Code'}</th>
@@ -263,40 +262,40 @@ export default function Tabs({ lang, gen, modifications, specialVersions, modelC
                   <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Регион' : 'Region'}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white">
                 {modelCodes.map((mc) => (
-                  <tr key={mc.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-mono font-semibold">{mc.code || '—'}</td>
-                    <td className="p-3">
+                  <tr key={mc.id} className="border-b last:border-none hover:bg-gray-50 transition-colors">
+                    <td className="p-3 font-mono font-semibold text-gray-800">{mc.code || '—'}</td>
+                    <td className="p-3 text-gray-600">
                       {mc.production_start
                         ? `${formatDate(mc.production_start)} – ${formatDate(mc.production_end)}`
                         : '—'}
                     </td>
-                    <td className="p-3">{mc.modification?.title || '—'}</td>
-                    <td className="p-3">
+                    <td className="p-3 text-gray-700">{mc.modification?.title || '—'}</td>
+                    <td className="p-3 text-gray-700">
                       {mc.body?.title
                         ? (lang === 'ru'
                             ? { Sedan: 'Седан', Touring: 'Универсал', Coupe: 'Купе', Cabriolet: 'Кабриолет', Compact: 'Компакт', Hatchback: 'Хэтчбек', 'Long wheelbase': 'Лонг' }[mc.body.title] || mc.body.title
                             : mc.body.title)
                         : '—'}
                     </td>
-                    <td className="p-3">{mc.engine?.index || '—'}</td>
-                    <td className="p-3">{mc.engine?.power_hp ? `${mc.engine.power_hp} hp` : '—'}</td>
-                    <td className="p-3">
+                    <td className="p-3 text-gray-700">{mc.engine?.index || '—'}</td>
+                    <td className="p-3 text-gray-700">{mc.engine?.power_hp ? `${mc.engine.power_hp} hp` : '—'}</td>
+                    <td className="p-3 text-gray-700">
                       {mc.drivetrain
                         ? (lang === 'ru'
                             ? { RWD: 'Задний', FWD: 'Передний', AWD: 'Полный' }[mc.drivetrain] || mc.drivetrain
                             : mc.drivetrain)
                         : '—'}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 text-gray-700">
                       {mc.steering?.code
                         ? (lang === 'ru'
                             ? { 'LHD': 'Левый', 'RHD': 'Правый' }[mc.steering.code] || mc.steering.code
                             : mc.steering.code)
                         : '—'}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 text-gray-700">
                       {mc.market?.title
                         ? (lang === 'ru'
                             ? {
