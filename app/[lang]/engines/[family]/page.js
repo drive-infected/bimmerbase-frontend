@@ -50,7 +50,9 @@ export default async function EngineFamilyPage({ params }) {
   famSearchParams.set('filters[slug][$eq]', family);
   famSearchParams.set('populate[engines]', 'true');
   famSearchParams.set('populate[articles]', 'true');
-  famSearchParams.set('populate[image]', 'true'); // 👈 обложка семейства
+  famSearchParams.set('populate[image]', 'true');
+  famSearchParams.set('populate[predecessor]', 'true');   // 👈 добавляем предшественника
+  famSearchParams.set('populate[successor]', 'true');     // 👈 и последователя
 
   const famRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?${famSearchParams.toString()}`,
@@ -166,7 +168,7 @@ export default async function EngineFamilyPage({ params }) {
           ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
         </a>
 
-        {/* Шапка с обложкой */}
+        {/* Шапка с обложкой, техническими данными, ссылками на поколения и описанием */}
         <div className="flex flex-col md:flex-row gap-8 mt-4">
           <div className="md:w-1/3 flex-shrink-0 relative">
             <OptimizedImage
@@ -195,14 +197,40 @@ export default async function EngineFamilyPage({ params }) {
               <span>•</span>
               <span>{fam.head_material} / {fam.block_material}</span>
             </div>
+
+            {/* Предшественник / последователь */}
+            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm">
+              {fam.predecessor && (
+                <div>
+                  <span className="text-gray-500">
+                    {lang === 'ru' ? '← Предшественник' : '← Predecessor'}:{' '}
+                  </span>
+                  <a href={`/${lang}/engines/${fam.predecessor.slug}`} className="text-blue-700 hover:underline">
+                    {fam.predecessor.code}
+                  </a>
+                </div>
+              )}
+              {fam.successor && (
+                <div>
+                  <span className="text-gray-500">
+                    {lang === 'ru' ? 'Преемник' : 'Successor'}:{' '}
+                  </span>
+                  <a href={`/${lang}/engines/${fam.successor.slug}`} className="text-blue-700 hover:underline">
+                    {fam.successor.code}
+                  </a>
+                  {' →'}
+                </div>
+              )}
+            </div>
+
+            {/* Описание семейства теперь внутри шапки */}
+            {fam.description && (
+              <div className="mt-4 rich-text text-gray-700 leading-relaxed">
+                <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
+              </div>
+            )}
           </div>
         </div>
-
-        {fam.description && (
-          <div className="mt-6 rich-text">
-            <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
-          </div>
-        )}
 
         {fam.features && (
           <div className="mt-6 rich-text">
