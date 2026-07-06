@@ -1,6 +1,7 @@
 // app/[lang]/engines/[family]/page.js
 import RelatedLinks from '@/components/RelatedLinks';
 import Script from 'next/script';
+import OptimizedImage from '@/components/OptimizedImage';
 
 export async function generateMetadata({ params }) {
   const { family, lang } = await params;
@@ -44,12 +45,12 @@ export async function generateMetadata({ params }) {
 export default async function EngineFamilyPage({ params }) {
   const { family, lang } = await params;
 
-  // 1. Семейство с двигателями и статьями
   const famSearchParams = new URLSearchParams();
   famSearchParams.set('locale', lang);
   famSearchParams.set('filters[slug][$eq]', family);
   famSearchParams.set('populate[engines]', 'true');
   famSearchParams.set('populate[articles]', 'true');
+  famSearchParams.set('populate[image]', 'true'); // 👈 обложка семейства
 
   const famRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?${famSearchParams.toString()}`,
@@ -71,7 +72,7 @@ export default async function EngineFamilyPage({ params }) {
     );
   }
 
-  // 2. Поколения, где используется семейство
+  // 2. Поколения применения
   const genSearchParams = new URLSearchParams();
   genSearchParams.set('locale', lang);
   genSearchParams.set('filters[engines][engine_family][slug][$eq]', family);
@@ -165,21 +166,36 @@ export default async function EngineFamilyPage({ params }) {
           ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
         </a>
 
-        <h1 className="text-4xl font-bold mt-4">
-          <span className="text-[#0066B1]">{fam.code}</span>
-        </h1>
-        <div className="flex flex-wrap gap-2 mt-3 text-sm text-gray-500">
-          <span>{fam.production_start?.substring(0, 4)}–{fam.production_end?.substring(0, 4)}</span>
-          <span>•</span>
-          <span>{fam.cylinders} cyl</span>
-          <span>•</span>
-          <span>
-            {fam.layout === 'Longitudinal'
-              ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
-              : lang === 'ru' ? 'Поперечное' : 'Transverse'}
-          </span>
-          <span>•</span>
-          <span>{fam.head_material} / {fam.block_material}</span>
+        {/* Шапка с обложкой */}
+        <div className="flex flex-col md:flex-row gap-8 mt-4">
+          <div className="md:w-1/3 flex-shrink-0 relative">
+            <OptimizedImage
+              image={fam.image}
+              alt={fam.code}
+              width={400}
+              height={300}
+              className="w-full h-auto rounded-lg shadow-md object-contain"
+              priority
+            />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold mt-2">
+              <span className="text-[#0066B1]">{fam.code}</span>
+            </h1>
+            <div className="flex flex-wrap gap-2 mt-3 text-sm text-gray-500">
+              <span>{fam.production_start?.substring(0, 4)}–{fam.production_end?.substring(0, 4)}</span>
+              <span>•</span>
+              <span>{fam.cylinders} cyl</span>
+              <span>•</span>
+              <span>
+                {fam.layout === 'Longitudinal'
+                  ? lang === 'ru' ? 'Продольное' : 'Longitudinal'
+                  : lang === 'ru' ? 'Поперечное' : 'Transverse'}
+              </span>
+              <span>•</span>
+              <span>{fam.head_material} / {fam.block_material}</span>
+            </div>
+          </div>
         </div>
 
         {fam.description && (
