@@ -3,6 +3,20 @@ import RelatedLinks from '@/components/RelatedLinks';
 import Script from 'next/script';
 import OptimizedImage from '@/components/OptimizedImage';
 
+// Вспомогательная функция: извлечение чистого текста из Blocks
+function blocksToText(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  return blocks
+    .flatMap(block => {
+      if (block.children) {
+        return block.children.map(child => child.text || '').join('');
+      }
+      return '';
+    })
+    .join(' ')
+    .trim();
+}
+
 export async function generateMetadata({ params }) {
   const { family, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
@@ -15,15 +29,15 @@ export async function generateMetadata({ params }) {
   const fam = metaData.data?.[0];
 
   if (!fam) {
-    return { title: lang === 'ru' ? 'Семейство не найдено – BimmerBase' : 'Family not found – BimmerBase' };
+    return { title: lang === 'ru' ? 'Двигатель не найден – BimmerBase' : 'Engine not found – BimmerBase' };
   }
 
-  const title = `${fam.code} – ${lang === 'ru' ? 'семейство двигателей' : 'engine family'} – BimmerBase`;
-  const description = `${fam.code} – ${fam.cylinders}-цилиндровый ${fam.fuel_type === 'Petrol' ? 'бензиновый' : 'дизельный'} двигатель (${fam.production_start?.substring(0,4)}–${fam.production_end?.substring(0,4)}). ${fam.engines?.length || 0} модификаций.`.substring(0, 160);
+  const title = `${fam.code} – ${lang === 'ru' ? 'двигатель BMW' : 'BMW engine'} – BimmerBase`;
+  const descriptionText = blocksToText(fam.description).substring(0, 160) || `${fam.code} – ${lang === 'ru' ? 'двигатель BMW' : 'BMW engine'}`;
 
   return {
     title,
-    description,
+    description: descriptionText,
     alternates: {
       canonical: `${siteUrl}/${lang}/engines/${fam.slug}`,
       languages: {
@@ -33,7 +47,7 @@ export async function generateMetadata({ params }) {
     },
     openGraph: {
       title,
-      description,
+      description: descriptionText,
       url: `${siteUrl}/${lang}/engines/${fam.slug}`,
       siteName: 'BimmerBase',
       type: 'website',
@@ -48,11 +62,11 @@ export default async function EngineFamilyPage({ params }) {
   const famSearchParams = new URLSearchParams();
   famSearchParams.set('locale', lang);
   famSearchParams.set('filters[slug][$eq]', family);
-  famSearchParams.set('populate[engines]', 'true');
+  famSearchParams.set('populate[engines]', 'true');          // модификации
   famSearchParams.set('populate[articles]', 'true');
   famSearchParams.set('populate[image]', 'true');
-  famSearchParams.set('populate[predecessor]', 'true');   // 👈 добавляем предшественника
-  famSearchParams.set('populate[successor]', 'true');     // 👈 и последователя
+  famSearchParams.set('populate[predecessor]', 'true');
+  famSearchParams.set('populate[successor]', 'true');
 
   const famRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/engine-families?${famSearchParams.toString()}`,
@@ -68,7 +82,7 @@ export default async function EngineFamilyPage({ params }) {
           ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
         </a>
         <h1 className="text-2xl mt-4">
-          {lang === 'ru' ? 'Семейство не найдено' : 'Family not found'}
+          {lang === 'ru' ? 'Двигатель не найден' : 'Engine not found'}
         </h1>
       </div>
     );
@@ -93,7 +107,7 @@ export default async function EngineFamilyPage({ params }) {
     console.error('Failed to load generations', e);
   }
 
-  const engines = (fam.engines || []).sort((a, b) => {
+  const modifications = (fam.engines || []).sort((a, b) => {
     if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
     return (a.index || '').localeCompare(b.index || '');
   });
@@ -101,15 +115,15 @@ export default async function EngineFamilyPage({ params }) {
   // 3. Секции для RelatedLinks
   const sections = [];
 
-  if (engines.length > 0) {
+  if (modifications.length > 0) {
     sections.push({
-      key: 'engines',
-      title: lang === 'ru' ? 'Двигатели' : 'Engines',
-      items: engines.map((eng) => ({
-        id: eng.documentId,
-        label: eng.index,
-        subtitle: `${eng.power_hp} hp • ${eng.displacement} cc`,
-        href: `/${lang}/engines/${fam.slug}/${eng.slug}`,
+      key: 'modifications',
+      title: lang === 'ru' ? 'Модификации' : 'Modifications',
+      items: modifications.map((mod) => ({
+        id: mod.documentId,
+        label: mod.index,
+        subtitle: `${mod.power_hp} hp • ${mod.displacement} cc`,
+        href: `/${lang}/engines/${fam.slug}/${mod.slug}`,
       })),
     });
   }
@@ -159,6 +173,19 @@ export default async function EngineFamilyPage({ params }) {
         name: fam.code,
       },
     ],
+  };
+
+  // Микроразметка EngineSpecification
+  const engineDescription = blocksToText(fam.description).substring(0, 500) || `${fam.code} engine`;
+  const engineSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'EngineSpecification',
+    name: fam.code,
+    description: engineDescription,
+    fuelType: fam.fuel_type,
+    engineDisplacement: fam.cylinders ? `${fam.cylinders} cyl` : undefined,
+    ...(fam.predecessor && { predecessorOf: { '@type': 'EngineSpecification', name: fam.predecessor.code } }),
+    ...(fam.successor && { successorOf: { '@type': 'EngineSpecification', name: fam.successor.code } }),
   };
 
   return (
@@ -223,7 +250,7 @@ export default async function EngineFamilyPage({ params }) {
               )}
             </div>
 
-            {/* Описание семейства теперь внутри шапки */}
+            {/* Описание двигателя внутри шапки */}
             {fam.description && (
               <div className="mt-4 rich-text text-gray-700 leading-relaxed">
                 <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
@@ -246,6 +273,11 @@ export default async function EngineFamilyPage({ params }) {
         id="schema-breadcrumbs-family"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <Script
+        id="schema-engine"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(engineSchema) }}
       />
     </>
   );
