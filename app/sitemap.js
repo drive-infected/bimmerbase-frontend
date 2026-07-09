@@ -1,5 +1,5 @@
 // app/sitemap.js
-export const dynamic = 'force-dynamic'; // гарантирует актуальность
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -28,9 +28,33 @@ function groupByDocumentId(items) {
     if (!map.has(item.documentId)) {
       map.set(item.documentId, {});
     }
-    map.get(item.documentId)[item.locale] = item;
+    map.get(item.documentId)[item.locale || 'default'] = item; // для нелокализованных используем ключ 'default'
   });
   return map;
+}
+
+// Вспомогательная функция для формирования альтернативных ссылок для локализованной сущности
+function localizedAlternates(locales, pathBuilder) {
+  const alternates = {};
+  ['en', 'ru'].forEach(l => {
+    const item = locales[l];
+    if (item) alternates[l] = `${BASE_URL}/${l}/${pathBuilder(item)}`;
+    else {
+      // fallback на другой язык, если для данного нет перевода
+      const fallback = locales['ru'] || locales['en'];
+      if (fallback) alternates[l] = `${BASE_URL}/${l}/${pathBuilder(fallback)}`;
+    }
+  });
+  return alternates;
+}
+
+// Построение URL для нелокализованной сущности (одинаковый slug для всех языков)
+function nonLocalizedAlternates(slug, pathBuilder) {
+  const alternates = {};
+  ['en', 'ru'].forEach(l => {
+    alternates[l] = `${BASE_URL}/${l}/${pathBuilder(slug)}`;
+  });
+  return alternates;
 }
 
 export default async function sitemap() {
@@ -57,119 +81,119 @@ export default async function sitemap() {
     });
   });
 
-  // 3. Серии
+  // 3. Серии (не локализованы)
   const seriesList = await fetchAllPages('series');
-  groupByDocumentId(seriesList).forEach(locales => {
-    const ru = locales['ru'] || locales['en'];
-    if (!ru) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l]) alternates[l] = `${BASE_URL}/${l}/models/${locales[l].slug}`;
-    });
+  seriesList.forEach(serie => {
     sitemapEntries.push({
-      url: `${BASE_URL}/ru/models/${ru.slug}`,
-      lastModified: ru.updatedAt,
+      url: `${BASE_URL}/ru/models/${serie.slug}`,
+      lastModified: serie.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.7,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: nonLocalizedAlternates(serie.slug, s => `models/${s}`),
+      },
     });
   });
 
-  // 4. Поколения
+  // 4. Поколения (локализованы)
   const generationsList = await fetchAllPages('generations', 'populate[series]=true');
-  groupByDocumentId(generationsList).forEach(locales => {
+  const generationsGrouped = groupByDocumentId(generationsList);
+  for (const [_, locales] of generationsGrouped) {
     const ru = locales['ru'] || locales['en'];
-    if (!ru || !ru.series) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l] && locales[l].series) {
-        alternates[l] = `${BASE_URL}/${l}/models/${locales[l].series.slug}/${locales[l].slug}`;
-      }
-    });
+    if (!ru || !ru.series) continue;
     sitemapEntries.push({
       url: `${BASE_URL}/ru/models/${ru.series.slug}/${ru.slug}`,
       lastModified: ru.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.8,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: localizedAlternates(locales, item => `models/${item.series.slug}/${item.slug}`),
+      },
     });
-  });
+  }
 
-  // 5. Семейства двигателей
+  // 5. Семейства двигателей (локализованы)
   const familiesList = await fetchAllPages('engine-families');
-  groupByDocumentId(familiesList).forEach(locales => {
+  const familiesGrouped = groupByDocumentId(familiesList);
+  for (const [_, locales] of familiesGrouped) {
     const ru = locales['ru'] || locales['en'];
-    if (!ru) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l]) alternates[l] = `${BASE_URL}/${l}/engines/${locales[l].slug}`;
-    });
+    if (!ru) continue;
     sitemapEntries.push({
       url: `${BASE_URL}/ru/engines/${ru.slug}`,
       lastModified: ru.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.7,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: localizedAlternates(locales, item => `engines/${item.slug}`),
+      },
     });
-  });
+  }
 
-  // 6. Модификации двигателей
+  // 6. Модификации двигателей (не локализованы)
   const enginesList = await fetchAllPages('engines', 'populate[engine_family]=true');
-  groupByDocumentId(enginesList).forEach(locales => {
-    const ru = locales['ru'] || locales['en'];
-    if (!ru || !ru.engine_family) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l] && locales[l].engine_family) {
-        alternates[l] = `${BASE_URL}/${l}/engines/${locales[l].engine_family.slug}/${locales[l].slug}`;
-      }
-    });
+  enginesList.forEach(engine => {
+    if (!engine.engine_family) return;
     sitemapEntries.push({
-      url: `${BASE_URL}/ru/engines/${ru.engine_family.slug}/${ru.slug}`,
-      lastModified: ru.updatedAt,
+      url: `${BASE_URL}/ru/engines/${engine.engine_family.slug}/${engine.slug}`,
+      lastModified: engine.updatedAt,
       changeFrequency: 'monthly',
       priority: 0.6,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: nonLocalizedAlternates(
+          `${engine.engine_family.slug}/${engine.slug}`,
+          s => `engines/${s}`
+        ),
+      },
     });
   });
 
-  // 7. Спецверсии
-  const specialVersionsList = await fetchAllPages('special-versions', 'populate[special_version_category]=true');
-  groupByDocumentId(specialVersionsList).forEach(locales => {
-    const ru = locales['ru'] || locales['en'];
-    if (!ru || !ru.special_version_category) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l] && locales[l].special_version_category) {
-        alternates[l] = `${BASE_URL}/${l}/special-versions/${locales[l].special_version_category.slug}/${locales[l].slug}`;
-      }
+  // 7. Категории спецверсий (не локализованы)
+  const specialCategoriesList = await fetchAllPages('special-version-categories');
+  specialCategoriesList.forEach(cat => {
+    sitemapEntries.push({
+      url: `${BASE_URL}/ru/special-versions/${cat.slug}`,
+      lastModified: cat.updatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      alternates: {
+        languages: nonLocalizedAlternates(cat.slug, s => `special-versions/${s}`),
+      },
     });
+  });
+
+  // 8. Спецверсии (локализованы)
+  const specialVersionsList = await fetchAllPages('special-versions', 'populate[special_version_category]=true');
+  const svGrouped = groupByDocumentId(specialVersionsList);
+  for (const [_, locales] of svGrouped) {
+    const ru = locales['ru'] || locales['en'];
+    if (!ru || !ru.special_version_category) continue;
     sitemapEntries.push({
       url: `${BASE_URL}/ru/special-versions/${ru.special_version_category.slug}/${ru.slug}`,
       lastModified: ru.updatedAt,
       changeFrequency: 'monthly',
       priority: 0.7,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: localizedAlternates(locales, item => `special-versions/${item.special_version_category.slug}/${item.slug}`),
+      },
     });
-  });
+  }
 
-  // 8. Статьи
+  // 9. Статьи (локализованы)
   const articlesList = await fetchAllPages('articles');
-  groupByDocumentId(articlesList).forEach(locales => {
+  const articlesGrouped = groupByDocumentId(articlesList);
+  for (const [_, locales] of articlesGrouped) {
     const ru = locales['ru'] || locales['en'];
-    if (!ru) return;
-    const alternates = {};
-    ['en', 'ru'].forEach(l => {
-      if (locales[l]) alternates[l] = `${BASE_URL}/${l}/articles/${locales[l].slug}`;
-    });
+    if (!ru) continue;
     sitemapEntries.push({
       url: `${BASE_URL}/ru/articles/${ru.slug}`,
       lastModified: ru.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.8,
-      alternates: { languages: alternates },
+      alternates: {
+        languages: localizedAlternates(locales, item => `articles/${item.slug}`),
+      },
     });
-  });
+  }
 
   return sitemapEntries;
 }
