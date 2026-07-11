@@ -2,13 +2,14 @@
 import RelatedLinks from '@/components/RelatedLinks';
 import { getSpecialVersionSections } from '@/lib/relatedLinks';
 import Script from 'next/script';
+import OptimizedImage from '@/components/OptimizedImage';
 
 export async function generateMetadata({ params }) {
   const { category, slug, lang } = await params;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
 
   const metaRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?locale=${lang}&filters[slug][$eq]=${slug}&filters[special_version_category][slug][$eq]=${category}&populate=special_version_category&populate=generation&populate=engine`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?locale=${lang}&filters[slug][$eq]=${slug}&filters[special_version_category][slug][$eq]=${category}&populate=special_version_category&populate=generation&populate=engine&populate[image]=true`,
     { cache: 'no-store' }
   );
   const metaData = await metaRes.json();
@@ -81,6 +82,7 @@ export default async function SpecialVersionPage({ params }) {
   searchParams.set('populate[base_options]', 'true');
   searchParams.set('populate[special_version_category]', 'true');
   searchParams.set('populate[series]', 'true');
+  searchParams.set('populate[image]', 'true');  // 👈 добавили запрос изображения
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/api/special-versions?${searchParams.toString()}`;
   const res = await fetch(url, { cache: 'no-store' });
@@ -171,29 +173,37 @@ export default async function SpecialVersionPage({ params }) {
           ))}
         </nav>
 
-        {/* Шапка страницы */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold">{sv.title}</h1>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
-                {sv.special_version_category && (
-                  <span className="bg-[#0066B1] text-white px-3 py-0.5 rounded-full text-xs font-medium">
-                    {sv.special_version_category.title}
-                  </span>
-                )}
-                {sv.production_start && (
-                  <span>
-                    {sv.production_start.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
-                  </span>
-                )}
-                {sv.production_count && (
-                  <span>
-                    {sv.production_count} {lang === 'ru' ? 'шт.' : 'units'}
-                  </span>
-                )}
-                {sv.power_hp && <span className="font-semibold">{sv.power_hp} hp</span>}
-              </div>
+        {/* Шапка страницы с изображением */}
+        <div className="flex flex-col md:flex-row gap-8 mb-8">
+          <div className="md:w-1/3 flex-shrink-0 relative">
+            <OptimizedImage
+              image={sv.image}
+              alt={sv.title}
+              width={400}
+              height={300}
+              className="w-full h-auto rounded-lg shadow-md object-contain"
+              priority
+            />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl sm:text-4xl font-bold">{sv.title}</h1>
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
+              {sv.special_version_category && (
+                <span className="bg-[#0066B1] text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                  {sv.special_version_category.title}
+                </span>
+              )}
+              {sv.production_start && (
+                <span>
+                  {sv.production_start.substring(0, 4)}–{sv.production_end?.substring(0, 4)}
+                </span>
+              )}
+              {sv.production_count && (
+                <span>
+                  {sv.production_count} {lang === 'ru' ? 'шт.' : 'units'}
+                </span>
+              )}
+              {sv.power_hp && <span className="font-semibold">{sv.power_hp} hp</span>}
             </div>
           </div>
         </div>
