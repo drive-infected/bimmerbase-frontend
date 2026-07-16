@@ -3,7 +3,6 @@ import RelatedLinks from '@/components/RelatedLinks';
 import Script from 'next/script';
 import OptimizedImage from '@/components/OptimizedImage';
 
-// Вспомогательная функция: извлечение чистого текста из Blocks
 function blocksToText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks
@@ -62,7 +61,7 @@ export default async function EngineFamilyPage({ params }) {
   const famSearchParams = new URLSearchParams();
   famSearchParams.set('locale', lang);
   famSearchParams.set('filters[slug][$eq]', family);
-  famSearchParams.set('populate[engines]', 'true');          // модификации
+  famSearchParams.set('populate[engines]', 'true');
   famSearchParams.set('populate[articles]', 'true');
   famSearchParams.set('populate[image]', 'true');
   famSearchParams.set('populate[predecessor]', 'true');
@@ -88,31 +87,48 @@ export default async function EngineFamilyPage({ params }) {
     );
   }
 
-  // 2. Поколения применения
-  const genSearchParams = new URLSearchParams();
-  genSearchParams.set('locale', lang);
-  genSearchParams.set('filters[engines][engine_family][slug][$eq]', family);
-  genSearchParams.set('populate[series]', 'true');
-  genSearchParams.set('sort', 'title');
-
-  let generations = [];
+  // Получаем модификации автомобилей для применяемости
+  const enginesForFamily = fam.engines || [];
+  let vehicleModifications = [];
   try {
-    const genRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/generations?${genSearchParams.toString()}`,
-      { cache: 'no-store' }
-    );
-    const genData = await genRes.json();
-    generations = genData.data || [];
+    // Для каждого двигателя семейства запрашиваем связанные модификации автомобилей
+    const modPromises = enginesForFamily.map(async (eng) => {
+      const modRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${eng.documentId}&populate=generation.series`,
+        { cache: 'no-store' }
+      );
+      const modData = await modRes.json();
+      return modData.data || [];
+    });
+    const results = await Promise.all(modPromises);
+    vehicleModifications = results.flat();
   } catch (e) {
-    console.error('Failed to load generations', e);
+    console.error('Failed to load modifications', e);
   }
+
+  // Группируем модификации по сериям
+  const groupedBySeries = {};
+  vehicleModifications.forEach(mod => {
+    if (!mod.generation || !mod.generation.series) return;
+    const seriesTitle = mod.generation.series.title;
+    const seriesSlug = mod.generation.series.slug;
+    const key = seriesSlug;
+    if (!groupedBySeries[key]) {
+      groupedBySeries[key] = {
+        title: seriesTitle,
+        slug: seriesSlug,
+        modifications: [],
+      };
+    }
+    groupedBySeries[key].modifications.push(mod);
+  });
 
   const modifications = (fam.engines || []).sort((a, b) => {
     if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
     return (a.index || '').localeCompare(b.index || '');
   });
 
-  // 3. Секции для RelatedLinks
+  // Секции для RelatedLinks
   const sections = [];
 
   if (modifications.length > 0) {
@@ -128,17 +144,23 @@ export default async function EngineFamilyPage({ params }) {
     });
   }
 
-  if (generations.length > 0) {
-    const sorted = [...generations].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  // Применяемость (группировка по сериям)
+  if (Object.keys(groupedBySeries).length > 0) {
+    const items = [];
+    Object.values(groupedBySeries).forEach(group => {
+      group.modifications.forEach(mod => {
+        items.push({
+          id: mod.documentId,
+          label: mod.title,
+          subtitle: `${group.title} (${group.modifications.length} ${lang === 'ru' ? 'модиф.' : 'mods'})`,
+          href: null, // пока нет страниц модификаций
+        });
+      });
+    });
     sections.push({
-      key: 'generations',
+      key: 'applications',
       title: lang === 'ru' ? 'Применяемость' : 'Applications',
-      items: sorted.map((gen) => ({
-        id: gen.documentId,
-        label: gen.title,
-        subtitle: gen.series?.title || '',
-        href: `/${lang}/models/${gen.series?.slug || ''}/${gen.slug}`,
-      })),
+      items,
     });
   }
 
@@ -175,7 +197,6 @@ export default async function EngineFamilyPage({ params }) {
     ],
   };
 
-  // Микроразметка EngineSpecification
   const engineDescription = blocksToText(fam.description).substring(0, 500) || `${fam.code} engine`;
   const engineSchema = {
     '@context': 'https://schema.org',
@@ -195,7 +216,7 @@ export default async function EngineFamilyPage({ params }) {
           ← {lang === 'ru' ? 'Двигатели' : 'Engines'}
         </a>
 
-        {/* Шапка с обложкой, техническими данными, ссылками на поколения и описанием */}
+        {/* Шапка */}
         <div className="flex flex-col md:flex-row gap-8 mt-4">
           <div className="md:w-1/3 flex-shrink-0 relative">
             <OptimizedImage
@@ -225,7 +246,6 @@ export default async function EngineFamilyPage({ params }) {
               <span>{fam.head_material} / {fam.block_material}</span>
             </div>
 
-            {/* Предшественник / последователь */}
             <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm">
               {fam.predecessor && (
                 <div>
@@ -250,7 +270,13 @@ export default async function EngineFamilyPage({ params }) {
               )}
             </div>
 
-            {/* Описание двигателя внутри шапки */}
+            {/* TU (Technical Update) */}
+            {fam.technical_update && (
+              <div className="mt-4 rich-text text-gray-700 leading-relaxed">
+                <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.technical_update) }} />
+              </div>
+            )}
+
             {fam.description && (
               <div className="mt-4 rich-text text-gray-700 leading-relaxed">
                 <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />

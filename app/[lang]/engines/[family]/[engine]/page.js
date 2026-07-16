@@ -52,6 +52,7 @@ export default async function EnginePage({ params }) {
   searchParams.set('populate[generations][populate][series]', 'true');
   searchParams.set('populate[articles]', 'true');
   searchParams.set('populate[special_versions]', 'true');
+  searchParams.set('populate[engine_versions]', 'true'); // 👈 запрашиваем версии
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/api/engines?${searchParams.toString()}`;
 
@@ -84,6 +85,36 @@ export default async function EnginePage({ params }) {
       </div>
     );
   }
+
+  // Получаем модификации автомобилей для применяемости
+  let vehicleModifications = [];
+  try {
+    const modRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${engine.documentId}&populate=generation.series`,
+      { cache: 'no-store' }
+    );
+    const modData = await modRes.json();
+    vehicleModifications = modData.data || [];
+  } catch (e) {
+    console.error('Failed to load modifications', e);
+  }
+
+  // Группируем по сериям
+  const groupedBySeries = {};
+  vehicleModifications.forEach(mod => {
+    if (!mod.generation || !mod.generation.series) return;
+    const seriesTitle = mod.generation.series.title;
+    const seriesSlug = mod.generation.series.slug;
+    const key = seriesSlug;
+    if (!groupedBySeries[key]) {
+      groupedBySeries[key] = {
+        title: seriesTitle,
+        slug: seriesSlug,
+        modifications: [],
+      };
+    }
+    groupedBySeries[key].modifications.push(mod);
+  });
 
   const family = engine.engine_family;
   const relatedSections = getEngineSections(engine, lang);
@@ -125,6 +156,9 @@ export default async function EnginePage({ params }) {
     ].filter(Boolean),
   };
 
+  const versions = engine.engine_versions || [];
+  const hasVersions = versions.length > 0;
+
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -154,8 +188,78 @@ export default async function EnginePage({ params }) {
           </p>
         )}
 
-        <SpecsSection engine={engine} lang={lang} />
-        <MaintenanceSection engine={engine} lang={lang} />
+        {/* Характеристики и версии */}
+        <div className="mt-8">
+          <h2 className="section-title">{lang === 'ru' ? 'Характеристики и версии' : 'Specifications & Versions'}</h2>
+          {hasVersions ? (
+            <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Версия' : 'Version'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Мощность' : 'Power'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Крутящий момент' : 'Torque'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Макс. обороты' : 'Max RPM'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Впрыск' : 'Injection'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Наддув' : 'Aspiration'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">VVT</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Масло' : 'Oil'}</th>
+                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Период' : 'Period'}</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {versions.map(ver => (
+                    <tr key={ver.id} className="border-b last:border-none hover:bg-gray-50 transition-colors">
+                      <td className="p-3 text-gray-700">
+                        {ver.slug || `${engine.index} ${ver.power_hp}hp`}
+                      </td>
+                      <td className="p-3 text-gray-700">{ver.power_hp} hp</td>
+                      <td className="p-3 text-gray-700">{ver.torque_nm} Nm</td>
+                      <td className="p-3 text-gray-700">{ver.max_rpm || '—'}</td>
+                      <td className="p-3 text-gray-700">{ver.injection || '—'}</td>
+                      <td className="p-3 text-gray-700">{ver.aspiration || '—'}</td>
+                      <td className="p-3 text-gray-700">{ver.vvt || '—'}</td>
+                      <td className="p-3 text-gray-700">
+                        {ver.oil_type && `${ver.oil_type} (${ver.oil_capacity} L)`}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {ver.production_start && `${ver.production_start.substring(0, 4)}–${ver.production_end?.substring(0, 4)}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <SpecsSection engine={engine} lang={lang} />
+          )}
+        </div>
+
+        {!hasVersions && <MaintenanceSection engine={engine} lang={lang} />}
+
+        {/* Применяемость */}
+        {Object.keys(groupedBySeries).length > 0 && (
+          <div className="mt-10">
+            <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
+            {Object.values(groupedBySeries).map(group => (
+              <div key={group.slug} className="mb-4">
+                <h3 className="text-md font-medium text-gray-700">
+                  <a href={`/${lang}/models/${group.slug}`} className="text-blue-700 hover:underline">
+                    {group.title}
+                  </a>
+                </h3>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {group.modifications.map(mod => (
+                    <span key={mod.id} className="inline-block px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
+                      {mod.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <RelatedLinks sections={relatedSections} lang={lang} />
       </div>
 
@@ -172,8 +276,6 @@ export default async function EnginePage({ params }) {
     </>
   );
 }
-
-// --- Вспомогательные компоненты (оставлены без изменений) ---
 
 function SpecsSection({ engine, lang }) {
   return (
