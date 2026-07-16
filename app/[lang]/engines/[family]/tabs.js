@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 
-export default function FamilyTabs({ lang, engines, groupedBySeries, technicalUpdateHtml, familySlug }) {
+export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, engines, groupedBySeries, familySlug }) {
   const tabs = [
+    { key: 'main', ru: 'Главное', en: 'Main' },
     { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
     { key: 'applications', ru: 'Применяемость', en: 'Applications' },
-    ...(technicalUpdateHtml ? [{ key: 'tu', ru: 'TU', en: 'TU' }] : []),
   ];
-  const [activeTab, setActiveTab] = useState('modifications');
+  const [activeTab, setActiveTab] = useState('main');
 
   return (
     <div className="mt-8">
@@ -27,6 +27,26 @@ export default function FamilyTabs({ lang, engines, groupedBySeries, technicalUp
           </button>
         ))}
       </div>
+
+      {activeTab === 'main' && (
+        <div className="space-y-6">
+          {featuresHtml ? (
+            <div className="rich-text">
+              <div dangerouslySetInnerHTML={{ __html: featuresHtml }} />
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">
+              {lang === 'ru' ? 'Нет информации об особенностях.' : 'No features information.'}
+            </p>
+          )}
+          {technicalUpdateHtml && (
+            <div className="rich-text">
+              <h2 className="section-title">TU</h2>
+              <div dangerouslySetInnerHTML={{ __html: technicalUpdateHtml }} />
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'modifications' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -59,12 +79,6 @@ export default function FamilyTabs({ lang, engines, groupedBySeries, technicalUp
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {activeTab === 'tu' && (
-        <div className="rich-text">
-          <div dangerouslySetInnerHTML={{ __html: technicalUpdateHtml }} />
         </div>
       )}
     </div>

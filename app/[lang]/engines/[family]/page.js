@@ -2,7 +2,7 @@
 import RelatedLinks from '@/components/RelatedLinks';
 import Script from 'next/script';
 import OptimizedImage from '@/components/OptimizedImage';
-import FamilyTabs from './tabs'; // клиентский компонент
+import FamilyTabs from './tabs';
 
 function blocksToText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -128,7 +128,6 @@ export default async function EngineFamilyPage({ params }) {
     return (a.index || '').localeCompare(b.index || '');
   });
 
-  // Статьи для RelatedLinks
   const articles = (fam.articles || []).filter((a) => a.locale === lang);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
@@ -162,7 +161,7 @@ export default async function EngineFamilyPage({ params }) {
     ...(fam.successor && { successorOf: { '@type': 'EngineSpecification', name: fam.successor.code } }),
   };
 
-  // Преобразуем technical_update в HTML
+  const featuresHtml = fam.features ? renderRichText(fam.features) : null;
   const tuHtml = fam.technical_update ? renderRichText(fam.technical_update) : null;
 
   return (
@@ -234,19 +233,13 @@ export default async function EngineFamilyPage({ params }) {
           </div>
         </div>
 
-        {fam.features && (
-          <div className="mt-6 rich-text">
-            <h2 className="section-title">{lang === 'ru' ? 'Особенности' : 'Features'}</h2>
-            <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.features) }} />
-          </div>
-        )}
-
         {/* Табы */}
         <FamilyTabs
           lang={lang}
+          featuresHtml={featuresHtml}
+          technicalUpdateHtml={tuHtml}
           engines={engines}
           groupedBySeries={Object.values(groupedBySeries)}
-          technicalUpdateHtml={tuHtml}
           familySlug={fam.slug}
         />
 

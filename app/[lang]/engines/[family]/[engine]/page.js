@@ -49,10 +49,9 @@ export default async function EnginePage({ params }) {
   searchParams.set('locale', lang);
   searchParams.set('filters[slug][$eq]', engineSlug);
   searchParams.set('populate[engine_family]', 'true');
-  searchParams.set('populate[generations][populate][series]', 'true');
   searchParams.set('populate[articles]', 'true');
   searchParams.set('populate[special_versions]', 'true');
-  searchParams.set('populate[engine_versions]', 'true'); // версии
+  searchParams.set('populate[engine_versions]', 'true');
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/api/engines?${searchParams.toString()}`;
 
@@ -190,14 +189,34 @@ export default async function EnginePage({ params }) {
 
         {/* Характеристики и версии */}
         <div className="mt-8">
-          <h2 className="section-title">{lang === 'ru' ? 'Характеристики и версии' : 'Specifications & Versions'}</h2>
+          <h2 className="section-title">
+            {lang === 'ru' ? 'Характеристики и версии' : 'Specifications & Versions'}
+          </h2>
           {hasVersions ? (
             <VersionsTable versions={versions} lang={lang} />
           ) : (
-            <>
-              <SpecsSection engine={engine} lang={lang} />
-              <MaintenanceSection engine={engine} lang={lang} />
-            </>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
+              {engine.power_hp && <SpecItem label={lang === 'ru' ? 'Мощность' : 'Power'} value={`${engine.power_hp} hp`} />}
+              {engine.torque_nm && <SpecItem label={lang === 'ru' ? 'Крутящий момент' : 'Torque'} value={`${engine.torque_nm} Nm`} />}
+              {engine.displacement && <SpecItem label={lang === 'ru' ? 'Объём' : 'Displacement'} value={`${engine.displacement} cc`} />}
+              {engine.bore_stroke && <SpecItem label={lang === 'ru' ? 'Диаметр × Ход' : 'Bore × Stroke'} value={engine.bore_stroke} />}
+              {engine.compression_ratio && <SpecItem label={lang === 'ru' ? 'Степень сжатия' : 'Compression'} value={engine.compression_ratio} />}
+              {engine.valves_per_cylinder && <SpecItem label={lang === 'ru' ? 'Клапанов' : 'Valves'} value={engine.valves_per_cylinder} />}
+              {engine.max_rpm && <SpecItem label={lang === 'ru' ? 'Макс. обороты' : 'Max RPM'} value={`${engine.max_rpm} rpm`} />}
+              {engine.timing_drive && (
+                <SpecItem
+                  label={lang === 'ru' ? 'ГРМ' : 'Timing'}
+                  value={engine.timing_drive === 'Chain' ? (lang === 'ru' ? 'Цепь' : 'Chain') : (lang === 'ru' ? 'Ремень' : 'Belt')}
+                />
+              )}
+              {engine.vvt && <SpecItem label={lang === 'ru' ? 'Фазорегуляторы' : 'VVT'} value={engine.vvt} />}
+              {engine.injection && <SpecItem label={lang === 'ru' ? 'Впрыск' : 'Injection'} value={engine.injection} />}
+              {engine.ecu && <SpecItem label="ECU" value={engine.ecu} />}
+              {engine.oil_type && <SpecItem label={lang === 'ru' ? 'Масло' : 'Oil'} value={engine.oil_type} />}
+              {engine.oil_capacity && <SpecItem label={lang === 'ru' ? 'Объём масла' : 'Oil capacity'} value={`${engine.oil_capacity} L`} />}
+              {engine.coolant_type && <SpecItem label={lang === 'ru' ? 'Тип ОЖ' : 'Coolant type'} value={engine.coolant_type} />}
+              {engine.coolant_capacity && <SpecItem label={lang === 'ru' ? 'Объём ОЖ' : 'Coolant capacity'} value={`${engine.coolant_capacity} L`} />}
+            </div>
           )}
         </div>
 
@@ -241,8 +260,6 @@ export default async function EnginePage({ params }) {
   );
 }
 
-// --- Вспомогательные компоненты ---
-
 function VersionsTable({ versions, lang }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mt-4">
@@ -276,47 +293,6 @@ function VersionsTable({ versions, lang }) {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-function SpecsSection({ engine, lang }) {
-  return (
-    <div className="mt-8">
-      <h2 className="section-title">{lang === 'ru' ? 'Характеристики' : 'Specifications'}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {engine.power_hp && <SpecItem label={lang === 'ru' ? 'Мощность' : 'Power'} value={`${engine.power_hp} hp`} />}
-        {engine.torque_nm && <SpecItem label={lang === 'ru' ? 'Крутящий момент' : 'Torque'} value={`${engine.torque_nm} Nm`} />}
-        {engine.displacement && <SpecItem label={lang === 'ru' ? 'Объём' : 'Displacement'} value={`${engine.displacement} cc`} />}
-        {engine.bore_stroke && <SpecItem label={lang === 'ru' ? 'Диаметр × Ход' : 'Bore × Stroke'} value={engine.bore_stroke} />}
-        {engine.compression_ratio && <SpecItem label={lang === 'ru' ? 'Степень сжатия' : 'Compression'} value={engine.compression_ratio} />}
-        {engine.valves_per_cylinder && <SpecItem label={lang === 'ru' ? 'Клапанов' : 'Valves'} value={engine.valves_per_cylinder} />}
-        {engine.max_rpm && <SpecItem label={lang === 'ru' ? 'Макс. обороты' : 'Max RPM'} value={`${engine.max_rpm} rpm`} />}
-        {engine.timing_drive && (
-          <SpecItem
-            label={lang === 'ru' ? 'ГРМ' : 'Timing'}
-            value={engine.timing_drive === 'Chain' ? (lang === 'ru' ? 'Цепь' : 'Chain') : (lang === 'ru' ? 'Ремень' : 'Belt')}
-          />
-        )}
-        {engine.vvt && <SpecItem label={lang === 'ru' ? 'Фазорегуляторы' : 'VVT'} value={engine.vvt} />}
-        {engine.injection && <SpecItem label={lang === 'ru' ? 'Впрыск' : 'Injection'} value={engine.injection} />}
-        {engine.ecu && <SpecItem label="ECU" value={engine.ecu} />}
-      </div>
-    </div>
-  );
-}
-
-function MaintenanceSection({ engine, lang }) {
-  if (!engine.oil_type && !engine.oil_capacity && !engine.coolant_type && !engine.coolant_capacity) return null;
-  return (
-    <div className="mt-10">
-      <h2 className="section-title">{lang === 'ru' ? 'Обслуживание' : 'Maintenance'}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {engine.oil_type && <SpecItem label={lang === 'ru' ? 'Масло' : 'Oil'} value={engine.oil_type} />}
-        {engine.oil_capacity && <SpecItem label={lang === 'ru' ? 'Объём масла' : 'Oil capacity'} value={`${engine.oil_capacity} L`} />}
-        {engine.coolant_type && <SpecItem label={lang === 'ru' ? 'Тип ОЖ' : 'Coolant type'} value={engine.coolant_type} />}
-        {engine.coolant_capacity && <SpecItem label={lang === 'ru' ? 'Объём ОЖ' : 'Coolant capacity'} value={`${engine.coolant_capacity} L`} />}
-      </div>
     </div>
   );
 }
