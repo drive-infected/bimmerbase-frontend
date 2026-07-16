@@ -80,20 +80,27 @@ export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, en
                 </a>
               </h3>
               {Array.from(series.generations.values()).map(gen => (
-                <div key={gen.slug} className="ml-4 mb-4">
+                <div key={gen.slug} className="mb-4">
                   <h4 className="text-lg font-medium text-gray-700 mb-2">
                     <a href={`/${lang}/models/${series.slug}/${gen.slug}`} className="text-blue-600 hover:underline">
                       {gen.title}
                     </a>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ml-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {gen.modifications.map(mod => (
-                      <div key={mod.id} className="card !p-3 flex flex-col">
-                        <span className="font-semibold text-sm">{mod.title}</span>
-                        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                      <div key={mod.id} className="card">
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="card-title !mb-0">{mod.title}</span>
+                          {mod.lci && (
+                            <span className={`card-badge ${mod.lci === 'LCI' ? 'card-badge-green' : 'card-badge-gray'}`}>
+                              {mod.lci === 'LCI' ? 'LCI' : 'Pre-LCI'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="card-text mt-2 space-y-1">
                           {mod.power_hp && <div>{mod.power_hp} hp • {mod.torque_nm} Nm</div>}
                           {mod.displacement && <div>{mod.displacement} cc</div>}
-                          {mod.fuel_type && <div>{translateFuel(mod.fuel_type)}</div>}
+                          <div>{translateFuel(mod.fuel_type)}</div>
                           {mod.markets && mod.markets.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {mod.markets.map(market => (
