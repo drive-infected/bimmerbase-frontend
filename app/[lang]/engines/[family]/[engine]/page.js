@@ -85,11 +85,11 @@ export default async function EnginePage({ params }) {
     );
   }
 
-  // Получаем модификации автомобилей для применяемости
+  // Получаем модификации автомобилей с рынками
   let vehicleModifications = [];
   try {
     const modRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${engine.documentId}&populate=generation.series`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${engine.documentId}&populate=generation.series&populate=markets`,
       { cache: 'no-store' }
     );
     const modData = await modRes.json();
@@ -98,21 +98,28 @@ export default async function EnginePage({ params }) {
     console.error('Failed to load modifications', e);
   }
 
-  // Группируем по сериям
-  const groupedBySeries = {};
+  // Группировка: series -> generation -> modifications
+  const seriesMap = new Map();
   vehicleModifications.forEach(mod => {
     if (!mod.generation || !mod.generation.series) return;
-    const seriesTitle = mod.generation.series.title;
-    const seriesSlug = mod.generation.series.slug;
-    const key = seriesSlug;
-    if (!groupedBySeries[key]) {
-      groupedBySeries[key] = {
-        title: seriesTitle,
-        slug: seriesSlug,
-        modifications: [],
-      };
+    const gen = mod.generation;
+    const series = gen.series;
+    if (!seriesMap.has(series.slug)) {
+      seriesMap.set(series.slug, {
+        title: series.title,
+        slug: series.slug,
+        generations: new Map(),
+      });
     }
-    groupedBySeries[key].modifications.push(mod);
+    const seriesEntry = seriesMap.get(series.slug);
+    if (!seriesEntry.generations.has(gen.slug)) {
+      seriesEntry.generations.set(gen.slug, {
+        title: gen.title,
+        slug: gen.slug,
+        modifications: [],
+      });
+    }
+    seriesEntry.generations.get(gen.slug).modifications.push(mod);
   });
 
   const family = engine.engine_family;
@@ -157,6 +164,15 @@ export default async function EnginePage({ params }) {
 
   const versions = engine.engine_versions || [];
   const hasVersions = versions.length > 0;
+
+  // Функция для перевода типа топлива
+  const translateFuel = (type) => {
+    if (lang === 'ru') {
+      if (type === 'Petrol') return 'Бензин';
+      if (type === 'Diesel') return 'Дизель';
+    }
+    return type;
+  };
 
   return (
     <>
@@ -221,25 +237,50 @@ export default async function EnginePage({ params }) {
         </div>
 
         {/* Применяемость */}
-        {Object.keys(groupedBySeries).length > 0 && (
+        {seriesMap.size > 0 && (
           <div className="mt-10">
             <h2 className="section-title">{lang === 'ru' ? 'Применяемость' : 'Applications'}</h2>
-            {Object.values(groupedBySeries).map(group => (
-              <div key={group.slug} className="mb-4">
-                <h3 className="text-md font-medium text-gray-700">
-                  <a href={`/${lang}/models/${group.slug}`} className="text-blue-700 hover:underline">
-                    {group.title}
-                  </a>
-                </h3>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {group.modifications.map(mod => (
-                    <span key={mod.id} className="inline-block px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                      {mod.title}
-                    </span>
+            <div className="space-y-8">
+              {Array.from(seriesMap.values()).map(series => (
+                <div key={series.slug}>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                    <a href={`/${lang}/models/${series.slug}`} className="text-blue-700 hover:underline">
+                      {series.title}
+                    </a>
+                  </h3>
+                  {Array.from(series.generations.values()).map(gen => (
+                    <div key={gen.slug} className="ml-4 mb-4">
+                      <h4 className="text-lg font-medium text-gray-700 mb-2">
+                        <a href={`/${lang}/models/${series.slug}/${gen.slug}`} className="text-blue-600 hover:underline">
+                          {gen.title}
+                        </a>
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ml-4">
+                        {gen.modifications.map(mod => (
+                          <div key={mod.id} className="card !p-3 flex flex-col">
+                            <span className="font-semibold text-sm">{mod.title}</span>
+                            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                              {mod.power_hp && <div>{mod.power_hp} hp • {mod.torque_nm} Nm</div>}
+                              {mod.displacement && <div>{mod.displacement} cc</div>}
+                              {mod.fuel_type && <div>{translateFuel(mod.fuel_type)}</div>}
+                              {mod.markets && mod.markets.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {mod.markets.map(market => (
+                                    <span key={market.id} className="inline-block px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
+                                      {market.title}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

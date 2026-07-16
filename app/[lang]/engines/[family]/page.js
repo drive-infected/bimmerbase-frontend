@@ -94,7 +94,7 @@ export default async function EngineFamilyPage({ params }) {
   try {
     const modPromises = enginesForFamily.map(async (eng) => {
       const modRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${eng.documentId}&populate=generation.series`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${eng.documentId}&populate=generation.series&populate=markets`,
         { cache: 'no-store' }
       );
       const modData = await modRes.json();
@@ -106,21 +106,28 @@ export default async function EngineFamilyPage({ params }) {
     console.error('Failed to load modifications', e);
   }
 
-  // Группируем модификации по сериям
-  const groupedBySeries = {};
+  // Группировка: series -> generation -> modifications
+  const seriesMap = new Map();
   vehicleModifications.forEach(mod => {
     if (!mod.generation || !mod.generation.series) return;
-    const seriesTitle = mod.generation.series.title;
-    const seriesSlug = mod.generation.series.slug;
-    const key = seriesSlug;
-    if (!groupedBySeries[key]) {
-      groupedBySeries[key] = {
-        title: seriesTitle,
-        slug: seriesSlug,
-        modifications: [],
-      };
+    const gen = mod.generation;
+    const series = gen.series;
+    if (!seriesMap.has(series.slug)) {
+      seriesMap.set(series.slug, {
+        title: series.title,
+        slug: series.slug,
+        generations: new Map(),
+      });
     }
-    groupedBySeries[key].modifications.push(mod);
+    const seriesEntry = seriesMap.get(series.slug);
+    if (!seriesEntry.generations.has(gen.slug)) {
+      seriesEntry.generations.set(gen.slug, {
+        title: gen.title,
+        slug: gen.slug,
+        modifications: [],
+      });
+    }
+    seriesEntry.generations.get(gen.slug).modifications.push(mod);
   });
 
   const engines = (fam.engines || []).sort((a, b) => {
@@ -239,7 +246,7 @@ export default async function EngineFamilyPage({ params }) {
           featuresHtml={featuresHtml}
           technicalUpdateHtml={tuHtml}
           engines={engines}
-          groupedBySeries={Object.values(groupedBySeries)}
+          seriesMap={seriesMap}
           familySlug={fam.slug}
         />
 

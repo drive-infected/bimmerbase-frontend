@@ -2,13 +2,21 @@
 
 import { useState } from 'react';
 
-export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, engines, groupedBySeries, familySlug }) {
+export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, engines, seriesMap, familySlug }) {
   const tabs = [
     { key: 'main', ru: 'Главное', en: 'Main' },
     { key: 'modifications', ru: 'Модификации', en: 'Modifications' },
     { key: 'applications', ru: 'Применяемость', en: 'Applications' },
   ];
   const [activeTab, setActiveTab] = useState('main');
+
+  const translateFuel = (type) => {
+    if (lang === 'ru') {
+      if (type === 'Petrol') return 'Бензин';
+      if (type === 'Diesel') return 'Дизель';
+    }
+    return type;
+  };
 
   return (
     <div className="mt-8">
@@ -55,6 +63,7 @@ export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, en
               <span className="card-title">{engine.index}</span>
               <div className="card-text mt-2 space-y-1 text-sm">
                 {engine.power_hp && <div>{engine.power_hp} hp • {engine.displacement} cc</div>}
+                {engine.fuel_type && <div className="text-xs text-gray-400">{translateFuel(engine.fuel_type)}</div>}
               </div>
             </a>
           ))}
@@ -62,21 +71,44 @@ export default function FamilyTabs({ lang, featuresHtml, technicalUpdateHtml, en
       )}
 
       {activeTab === 'applications' && (
-        <div className="space-y-6">
-          {groupedBySeries.map(group => (
-            <div key={group.slug}>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                <a href={`/${lang}/models/${group.slug}`} className="text-blue-700 hover:underline">
-                  {group.title}
+        <div className="space-y-8">
+          {Array.from(seriesMap.values()).map(series => (
+            <div key={series.slug}>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                <a href={`/${lang}/models/${series.slug}`} className="text-blue-700 hover:underline">
+                  {series.title}
                 </a>
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {group.modifications.map(mod => (
-                  <span key={mod.id} className="inline-block px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                    {mod.title}
-                  </span>
-                ))}
-              </div>
+              {Array.from(series.generations.values()).map(gen => (
+                <div key={gen.slug} className="ml-4 mb-4">
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">
+                    <a href={`/${lang}/models/${series.slug}/${gen.slug}`} className="text-blue-600 hover:underline">
+                      {gen.title}
+                    </a>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ml-4">
+                    {gen.modifications.map(mod => (
+                      <div key={mod.id} className="card !p-3 flex flex-col">
+                        <span className="font-semibold text-sm">{mod.title}</span>
+                        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                          {mod.power_hp && <div>{mod.power_hp} hp • {mod.torque_nm} Nm</div>}
+                          {mod.displacement && <div>{mod.displacement} cc</div>}
+                          {mod.fuel_type && <div>{translateFuel(mod.fuel_type)}</div>}
+                          {mod.markets && mod.markets.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {mod.markets.map(market => (
+                                <span key={market.id} className="inline-block px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
+                                  {market.title}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
