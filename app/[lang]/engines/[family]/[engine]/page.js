@@ -52,7 +52,7 @@ export default async function EnginePage({ params }) {
   searchParams.set('populate[generations][populate][series]', 'true');
   searchParams.set('populate[articles]', 'true');
   searchParams.set('populate[special_versions]', 'true');
-  searchParams.set('populate[engine_versions]', 'true'); // 👈 запрашиваем версии
+  searchParams.set('populate[engine_versions]', 'true'); // версии
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/api/engines?${searchParams.toString()}`;
 
@@ -192,50 +192,14 @@ export default async function EnginePage({ params }) {
         <div className="mt-8">
           <h2 className="section-title">{lang === 'ru' ? 'Характеристики и версии' : 'Specifications & Versions'}</h2>
           {hasVersions ? (
-            <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Версия' : 'Version'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Мощность' : 'Power'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Крутящий момент' : 'Torque'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Макс. обороты' : 'Max RPM'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Впрыск' : 'Injection'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Наддув' : 'Aspiration'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">VVT</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Масло' : 'Oil'}</th>
-                    <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Период' : 'Period'}</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {versions.map(ver => (
-                    <tr key={ver.id} className="border-b last:border-none hover:bg-gray-50 transition-colors">
-                      <td className="p-3 text-gray-700">
-                        {ver.slug || `${engine.index} ${ver.power_hp}hp`}
-                      </td>
-                      <td className="p-3 text-gray-700">{ver.power_hp} hp</td>
-                      <td className="p-3 text-gray-700">{ver.torque_nm} Nm</td>
-                      <td className="p-3 text-gray-700">{ver.max_rpm || '—'}</td>
-                      <td className="p-3 text-gray-700">{ver.injection || '—'}</td>
-                      <td className="p-3 text-gray-700">{ver.aspiration || '—'}</td>
-                      <td className="p-3 text-gray-700">{ver.vvt || '—'}</td>
-                      <td className="p-3 text-gray-700">
-                        {ver.oil_type && `${ver.oil_type} (${ver.oil_capacity} L)`}
-                      </td>
-                      <td className="p-3 text-gray-700">
-                        {ver.production_start && `${ver.production_start.substring(0, 4)}–${ver.production_end?.substring(0, 4)}`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <VersionsTable versions={versions} lang={lang} />
           ) : (
-            <SpecsSection engine={engine} lang={lang} />
+            <>
+              <SpecsSection engine={engine} lang={lang} />
+              <MaintenanceSection engine={engine} lang={lang} />
+            </>
           )}
         </div>
-
-        {!hasVersions && <MaintenanceSection engine={engine} lang={lang} />}
 
         {/* Применяемость */}
         {Object.keys(groupedBySeries).length > 0 && (
@@ -274,6 +238,45 @@ export default async function EnginePage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
     </>
+  );
+}
+
+// --- Вспомогательные компоненты ---
+
+function VersionsTable({ versions, lang }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mt-4">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-gray-50 border-b">
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Версия' : 'Version'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Мощность' : 'Power'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Крутящий момент' : 'Torque'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Макс. обороты' : 'Max RPM'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Впрыск' : 'Injection'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Наддув' : 'Aspiration'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">VVT</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Масло' : 'Oil'}</th>
+            <th className="text-left p-3 font-medium text-gray-600">{lang === 'ru' ? 'Период' : 'Period'}</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white">
+          {versions.map(ver => (
+            <tr key={ver.id} className="border-b last:border-none hover:bg-gray-50 transition-colors">
+              <td className="p-3 text-gray-700">{ver.slug || `${ver.engine?.index || ''} ${ver.power_hp}hp`}</td>
+              <td className="p-3 text-gray-700">{ver.power_hp} hp</td>
+              <td className="p-3 text-gray-700">{ver.torque_nm} Nm</td>
+              <td className="p-3 text-gray-700">{ver.max_rpm || '—'}</td>
+              <td className="p-3 text-gray-700">{ver.injection || '—'}</td>
+              <td className="p-3 text-gray-700">{ver.aspiration || '—'}</td>
+              <td className="p-3 text-gray-700">{ver.vvt || '—'}</td>
+              <td className="p-3 text-gray-700">{ver.oil_type && `${ver.oil_type} (${ver.oil_capacity} L)`}</td>
+              <td className="p-3 text-gray-700">{ver.production_start && `${ver.production_start.substring(0,4)}–${ver.production_end?.substring(0,4)}`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

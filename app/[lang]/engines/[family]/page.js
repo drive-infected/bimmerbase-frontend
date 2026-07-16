@@ -2,6 +2,7 @@
 import RelatedLinks from '@/components/RelatedLinks';
 import Script from 'next/script';
 import OptimizedImage from '@/components/OptimizedImage';
+import FamilyTabs from './tabs'; // клиентский компонент
 
 function blocksToText(blocks) {
   if (!blocks || !Array.isArray(blocks)) return '';
@@ -91,7 +92,6 @@ export default async function EngineFamilyPage({ params }) {
   const enginesForFamily = fam.engines || [];
   let vehicleModifications = [];
   try {
-    // Для каждого двигателя семейства запрашиваем связанные модификации автомобилей
     const modPromises = enginesForFamily.map(async (eng) => {
       const modRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modifications?filters[engines][documentId][$eq]=${eng.documentId}&populate=generation.series`,
@@ -123,60 +123,13 @@ export default async function EngineFamilyPage({ params }) {
     groupedBySeries[key].modifications.push(mod);
   });
 
-  const modifications = (fam.engines || []).sort((a, b) => {
+  const engines = (fam.engines || []).sort((a, b) => {
     if (a.displacement !== b.displacement) return (a.displacement || 0) - (b.displacement || 0);
     return (a.index || '').localeCompare(b.index || '');
   });
 
-  // Секции для RelatedLinks
-  const sections = [];
-
-  if (modifications.length > 0) {
-    sections.push({
-      key: 'modifications',
-      title: lang === 'ru' ? 'Модификации' : 'Modifications',
-      items: modifications.map((mod) => ({
-        id: mod.documentId,
-        label: mod.index,
-        subtitle: `${mod.power_hp} hp • ${mod.displacement} cc`,
-        href: `/${lang}/engines/${fam.slug}/${mod.slug}`,
-      })),
-    });
-  }
-
-  // Применяемость (группировка по сериям)
-  if (Object.keys(groupedBySeries).length > 0) {
-    const items = [];
-    Object.values(groupedBySeries).forEach(group => {
-      group.modifications.forEach(mod => {
-        items.push({
-          id: mod.documentId,
-          label: mod.title,
-          subtitle: `${group.title} (${group.modifications.length} ${lang === 'ru' ? 'модиф.' : 'mods'})`,
-          href: null, // пока нет страниц модификаций
-        });
-      });
-    });
-    sections.push({
-      key: 'applications',
-      title: lang === 'ru' ? 'Применяемость' : 'Applications',
-      items,
-    });
-  }
-
+  // Статьи для RelatedLinks
   const articles = (fam.articles || []).filter((a) => a.locale === lang);
-  if (articles.length > 0) {
-    sections.push({
-      key: 'articles',
-      title: lang === 'ru' ? 'Статьи' : 'Articles',
-      items: articles.map((article) => ({
-        id: article.documentId,
-        label: article.title,
-        subtitle: article.intro ? article.intro.substring(0, 100) : null,
-        href: `/${lang}/articles/${article.slug}`,
-      })),
-    });
-  }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bimmerbase.ru';
   const breadcrumbSchema = {
@@ -208,6 +161,9 @@ export default async function EngineFamilyPage({ params }) {
     ...(fam.predecessor && { predecessorOf: { '@type': 'EngineSpecification', name: fam.predecessor.code } }),
     ...(fam.successor && { successorOf: { '@type': 'EngineSpecification', name: fam.successor.code } }),
   };
+
+  // Преобразуем technical_update в HTML
+  const tuHtml = fam.technical_update ? renderRichText(fam.technical_update) : null;
 
   return (
     <>
@@ -270,13 +226,6 @@ export default async function EngineFamilyPage({ params }) {
               )}
             </div>
 
-            {/* TU (Technical Update) */}
-            {fam.technical_update && (
-              <div className="mt-4 rich-text text-gray-700 leading-relaxed">
-                <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.technical_update) }} />
-              </div>
-            )}
-
             {fam.description && (
               <div className="mt-4 rich-text text-gray-700 leading-relaxed">
                 <div dangerouslySetInnerHTML={{ __html: renderRichText(fam.description) }} />
@@ -292,7 +241,29 @@ export default async function EngineFamilyPage({ params }) {
           </div>
         )}
 
-        <RelatedLinks sections={sections} lang={lang} />
+        {/* Табы */}
+        <FamilyTabs
+          lang={lang}
+          engines={engines}
+          groupedBySeries={Object.values(groupedBySeries)}
+          technicalUpdateHtml={tuHtml}
+          familySlug={fam.slug}
+        />
+
+        {/* Статьи (если есть) */}
+        {articles.length > 0 && (
+          <div className="mt-10">
+            <h2 className="section-title">{lang === 'ru' ? 'Статьи' : 'Articles'}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {articles.map(article => (
+                <a key={article.id} href={`/${lang}/articles/${article.slug}`} className="card-link">
+                  <span className="card-title">{article.title}</span>
+                  {article.intro && <p className="card-text mt-1 text-sm">{article.intro.substring(0, 100)}</p>}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Script
