@@ -208,7 +208,14 @@ export default async function EnginePage({ params }) {
             {lang === 'ru' ? 'Характеристики и версии' : 'Specifications & Versions'}
           </h2>
           {hasVersions ? (
-            <VersionsTable versions={versions} lang={lang} />
+            <>
+              <p className="text-sm text-gray-500 mt-1 mb-4">
+                {lang === 'ru'
+                  ? 'У этого двигателя существует несколько версий'
+                  : 'This engine has multiple versions'}
+              </p>
+              <VersionsTable versions={versions} lang={lang} />
+            </>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
               {engine.power_hp && <SpecItem label={lang === 'ru' ? 'Мощность' : 'Power'} value={`${engine.power_hp} hp`} />}
